@@ -1,6 +1,6 @@
-#How to use project_analyze.sh script:
+# How to use project_analyze.sh script:
 
-##Basic Commands/Execution
+## Basic Commands/Execution
 This script initializes when the user put the following command in ~CS1XA3/Project01 directory
 ./project_analyze.sh 
 
@@ -13,5 +13,5 @@ These features are labelled with numbers, and the user is to input the correspon
 1
 and hit enter. 
 
-##Description of Features
+## Description of Features
 
