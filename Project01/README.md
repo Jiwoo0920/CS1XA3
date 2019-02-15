@@ -2,7 +2,7 @@
 **Name:** Jiwoo Lee  
 **MacID:** leej229
 
-**Last Update:** Feb 15, 2019 (10:35 AM) 
+**Last Update:** Feb 15, 2019 (10:38 AM)  
 **Status:** Finished Part 1
 
 # Description
@@ -42,9 +42,9 @@ and hit enter.
 # Description of Features
 ### 1) TODO Log
 * Creates the directory **~/CS1XA3/Project01/logs** and file **~/CS1XA3/Project01/logs/todo.log**
-    * If they already exist, the script deletes both the **log** directory and **todo.log** file, and creates again
+    * If they already exist, the script deletes both the **log** directory and **todo.log** file, and creates them again
 * Puts each line of every file in your repo with the tag **#TODO** into the file **todo.log**
-* To execute this features, simply input the following and hit enter (there are no further steps needed)
+* To execute this feature, simply input the following and hit enter (there are no further steps needed)
     ```
     Feature: 1
     ```
