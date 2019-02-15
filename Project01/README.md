@@ -1,3 +1,11 @@
+# Overview
+**Name:** Jiwoo Lee  
+**MacID:** leej229
+
+**Last Update:** Feb 15, 2019  
+**Status:** Finished Part 1
+
+
 # Basic Commands/Execution
 This script initializes when the user put the following command in ~CS1XA3/Project01 directory:
 ```
@@ -31,7 +39,7 @@ and hit enter.
 ### 1) TODO Log
 * Creates the directory **~/CS1XA3/Project01/logs** and file **~/CS1XA3/Project01/logs/todo.log**
     * If they already exist, the script deletes both the **log** directory and **todo.log** file, and creates again
-* Puts each line of every file in your repo with the tag #TODO into a file todo.log
+* Puts each line of every file in your repo with the tag **#TODO** into the file **todo.log**
 
 
 
