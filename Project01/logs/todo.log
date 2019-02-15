@@ -1,3 +1,0 @@
-#TODO Log
-   #grep lines with #TODO and copy it to todo.log
-   grep -rh "#TODO" > ~/CS1XA3/Project01/logs/todo.log 
