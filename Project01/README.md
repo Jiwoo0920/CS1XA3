@@ -1,5 +1,6 @@
-How to use project_analyze.sh script:
+#How to use project_analyze.sh script:
 
+##Basic Commands/Execution
 This script initializes when the user put the following command in ~CS1XA3/Project01 directory
 ./project_analyze.sh 
 
@@ -11,3 +12,6 @@ These features are labelled with numbers, and the user is to input the correspon
 (For example, if you want to execute the TODO Log feature of the script, input:
 1
 and hit enter. 
+
+##Description of Features
+
