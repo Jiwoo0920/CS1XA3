@@ -1,5 +1,4 @@
-#TODO Log
    #grep lines with #TODO and copy it to todo.log
-   grep -rh "#TODO" > ~/CS1XA3/Project01/logs/todo.log
+   grep -rh "#TODO" > ~/CS1XA3/Project01/logs/todo.log 2> /dev/null
 * Puts each line of every file in your repo with the tag **#TODO** into the file **todo.log**
 * Once it is successfully executed, the script will terminate, and the user will now be able to access **todo.log** in **~/CS1XA3/Project01** directory that contains each line of every file in the repo with the tag **#TODO** on it 

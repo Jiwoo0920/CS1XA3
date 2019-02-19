@@ -16,15 +16,14 @@ This script initializes when the user writes the following command in ~CS1XA3/Pr
 ./project_analyze.sh
 ```
 
-Then, the user will be given a set of options to choose which feature of the script he/she wishes to execute.
-As of right now (Friday, Feb 15, 2019), there is only one working feature in this script, which is _**TODO Log**_.
-By Tuesday Feb 26, 2019, the user will have a set of at least 3 features to choose from.
-
-The following lines are what the user will see when he/she first executes the script:
+Then, the user will be given a set of options to choose which feature of the script he/she wishes to execute. The following lines are what the user will see when he/she first executes the script:
 ```
 Please select a feature:
 1) TODO Log
-2) Another Feature Coming Soon (Part 2)
+2) Merge Log
+3) File Type Count
+4) Compile Error Log
+5) (Custom) chmod Converter
 Feature:
 ```
 
@@ -37,30 +36,75 @@ For example, if the user wants to execute _**TODO Log**_ feature, he/she would i
 ```
 Feature: 1
 ```
-and hit enter. 
+and hit enter.
 
 # Description of Features
 ### 1) TODO Log
-* Creates the directory **~/CS1XA3/Project01/logs** and file **~/CS1XA3/Project01/logs/todo.log**
-    * If they already exist, the script deletes both the **log** directory and **todo.log** file, and creates them again
+* Creates the file **~/CS1XA3/Project01/logs/todo.log**
+    * If it already exists, the script deletes **todo.log** file, and creates it again
 * Puts each line of every file in your repo with the tag **#TODO** into the file **todo.log**
-* To execute this feature, simply input the following and hit enter (there are no further steps needed)
+* To execute this feature, simply input the following and hit enter (no further steps needed)
     ```
     Feature: 1
     ```
-* Once it is successfully executed, the script will terminate, and the user will now be able to access **todo.log** in **~/CS1XA3/Project01** directory that contains each line of every file in the repo with the tag **#TODO** on it 
+* Once it is successfully executed, the script will terminate, and the user will now be able to access **todo.log** in **~/CS1XA3/Project01/logs** directory that contains each line of every file in the repo with the tag **#TODO** on it
 
+### 2) Merge Log
+* Creates the file **~/CS1XA3/Project01/logs/merge.log**
+    * If it already exists, the script deletes **merge.log** file, and creates it again
+* Find all the commit hashes where merge is mentioned in the commit message and put them in a file **merge.log**
+* To execute this feature, simply input the following and hit enter (no further steps needed)
+    ```
+    Feature: 2
+    ```
+* Once it is successfully executed, the script will terminate, and the user will now be able to access **merge.log** in **~/CS1XA3/Project01/logs** directory with all the commit hashes where merge is mentioned in the commit message
 
+### 3) File Type Count
+* For each HTML, Javascript, CSS, Python, Haskell and Bash Script file, the script outputs a file count for how many of each exist
+* To execute this feautre, simply input the following and hit enter (no further steps needed)
+    ```
+    Feature: 3
+    ```
+* Once it is successfully executed, the script will terminate, and the user will now able to see a file count on the command line. An example output would be something like:
+    ```
+    HTML: 4, Javascript: 1, CSS: 0, Python: 5, Haskell: 2, Bash Script: 1
+    ```
 
+### 4) Compile Error Log
+* Creates the file **~/CS1XA3/Project01/logs/compile_fail.log**
+    * If it already exists, the script deletes **compile_fail.log** file, and creates it again
+* Finds Haskell and Python files in your repo that fail to compile (i.e have syntax errors) and put them in a file **compile_fail.log**
+* To execute this feautre, imply input the following and hit enter (no further steps needed)
+    ```
+    Feature: 4
+    ```
+* Once it is successfully executed, the script will terminate, and the user will now able to access **compile_fail.log** in **~/CS1XA3/Project01/logs** directory with all the **.py** and **.hs** files that failed to compile
 
-
-
-
-
-
-
-
-
-
-
+### 5) (Custom) chmod Converter
+* This feature allows user to change permissions based on extension of the files in a specific directory
+* The following lines are what the user will see when he/she first executes this feature: 
+    ```
+    Path of Directory:
+    Extension:
+    chmod:
+    ```
+* The user is to input the desired directory, extension, and chmod number
+* For example, if the user wants to change permission of all python files in **~/CS1XA3** directory to give full rwx permission to only the user, input:
+    ```
+    Path of Directory: ~/CS1XA3
+    Extension: py
+    chmod: 700
+    ```
+* You can also change permissions of multiple extensions. For example, if you want to change permissions of all python and haskell files in in **~/CS1XA3** directory to give full rwx permission to everyone, input:
+    ```
+    Path of Directory: ~/CS1XA3
+    Extension: py hs
+    chmod: 777
+    ```
+    * The two extensions must be separated by a space in between
+* To execute this feautre, simply input the following and hit enter (no further steps needed)
+    ```
+    Feature: 5
+    ```
+* Once it is successfully executed, the script will terminate, and the permissions of the desired files will be converted to the desired chmod number (type ls -la on the command line to check permissions)
 
