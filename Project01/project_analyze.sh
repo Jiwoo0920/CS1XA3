@@ -1,7 +1,7 @@
 #! /bin/bash
 cd ..
 echo "Please read README.md for description of the features"
-printf "Please select a feature:\n1:TODO Log\n2:Merge Log\n3:Another Feature\n4:Compile Error Log\n5:(Custom) chmod converter \nFeature:"
+printf "Please select a feature:\n1:TODO Log\n2:Merge Log\n3:Another Feature\n4:Compile Error Log\n5:Delete Temporary Files\n6:(Custom) chmod converter \nFeature:"
 read input
 # Part 1: Interactive script (5pt) + TODO Log (5 pt)
 # Part 2: Merge Log (5 pt) + [BONUS: File Type Count (5pt) + Compile Error Log (10pt)]
@@ -22,7 +22,7 @@ elif [ $input = "2" ]; then
     if [ -f ~/CS1XA3/Project01/logs/merge.log ]; then
         rm ~/CS1XA3/Project01/logs/merge.log
         touch ~/CS1XA3/Project01/logs/merge.log
-    else 
+    else
         touch ~/CS1XA3/Project01/logs/merge.log
     fi
 
@@ -33,24 +33,24 @@ elif [ $input = "2" ]; then
     cut -d " " -f 1 $tmpFile2 >> ~/CS1XA3/Project01/logs/merge.log
 
 #3) File Type Count-------------------------------------------------------------------------------------------------------------------------------DONE
-elif [ $input = "3" ]; then 
+elif [ $input = "3" ]; then
     result=()
     #HTML----------------------------------------------------------------------------------------
     html=$(mktemp)
     find ~/CS1XA3 -iname "*.html" -type f -print0 | while IFS= read -d $'\0' files; do
         echo $files >> $html
         done
-    if [ -s $html ]; then 
+    if [ -s $html ]; then
         result1=$(wc -l $html | cut -d " " -f 1)
         result+=($result1)
     else
         result+=(0)
-    fi 
+    fi
     #Javascript------------------------------------------------------------------------------------
     javascript=$(mktemp)
     find ~/CS1XA3 -iname "*.js" -type f -print0 | while IFS= read -d $'\0' files; do
         echo $files >> $javascript
-        done 
+        done
     if [ -s $javascript ]; then
         result2=$(wc -l $javascript | cut -d " " -f 1)
         result+=($result2)
@@ -60,14 +60,14 @@ elif [ $input = "3" ]; then
     #css------------------------------------------------------------------------------------
     css=$(mktemp)
     find ~/CS1XA3 -iname "*.css" -type f -print0 | while IFS= read -d $'\0' files; do
-        echo $files >> $css  
+        echo $files >> $css
         done
     if [ -s $css ]; then
         result3=$(wc -l $css | cut -d " " -f 1)
         result+=($result3)
     else
         result+=(0)
-    fi 
+    fi
     #python------------------------------------------------------------------------------------
     python=$(mktemp)
     find ~/CS1XA3 -iname "*.py" -type f -print0 | while IFS= read -d $'\0' files; do
@@ -89,18 +89,18 @@ elif [ $input = "3" ]; then
         result+=($result5)
     else
         result+=(0)
-    fi     
+    fi
     #bash------------------------------------------------------------------------------------
     bash=$(mktemp)
     find ~/CS1XA3 -iname "*.sh" -type f -print0 | while IFS= read -d $'\0' files; do
-        echo $files >> $bash 
+        echo $files >> $bash
         done
     if [ -s $bash ]; then
         result6=$(wc -l $bash | cut -d " " -f 1)
         result+=($result6)
     else
         result+=(0)
-    fi     
+    fi
     #result------------------------------------------------------------------------------------
     echo "HTML: ${result[0]}, Javascript: ${result[1]}, CSS: ${result[2]}, Python: ${result[3]}, Haskell: ${result[4]}, Bash Script: ${result[5]}"
 
@@ -110,7 +110,7 @@ elif [ $input = "3" ]; then
 #4) Compile Error Log--------------------------------------------------------------------------------------------------------------------------------
 elif [ $input = "4" ]; then
     #Create compile_fail.log
-    if [ -f ~/CS1XA3/Project01/logs/compile_fail.log ]; then 
+    if [ -f ~/CS1XA3/Project01/logs/compile_fail.log ]; then
         rm ~/CS1XA3/Project01/logs/compile_fail.log
         touch ~/CS1XA3/Project01/logs/compile_fail.log
     else
@@ -118,10 +118,10 @@ elif [ $input = "4" ]; then
     fi
 
     #Find python files that failed to compile
-    find ~/CS1XA3 -iname "*.py" -type f -print0 | while IFS= read -d $'\0' files; do 
+    find ~/CS1XA3 -iname "*.py" -type f -print0 | while IFS= read -d $'\0' files; do
         python -m py_compile $files 2> /dev/null
         if [ $? -ne 0 ]; then
-            echo $files >> ~/CS1XA3/Project01/logs/compile_fail.log 
+            echo $files >> ~/CS1XA3/Project01/logs/compile_fail.log
         else
             rm $files"c"
         fi
@@ -129,10 +129,10 @@ elif [ $input = "4" ]; then
 
 
     #Find Haskell files that failed to compile
-    find ~/CS1XA3 -iname "*.hs" -type f -print0 | while IFS= read -d $'\0' files; do 
+    find ~/CS1XA3 -iname "*.hs" -type f -print0 | while IFS= read -d $'\0' files; do
         ghc $files >/dev/null 2>/dev/null
         if [ $? -ne 0 ]; then
-            echo $files >> ~/CS1XA3/Project01/logs/compile_fail.log 
+            echo $files >> ~/CS1XA3/Project01/logs/compile_fail.log
         else
             name=$(echo $files | cut -f1 -d".")
 	    rm $name
@@ -141,11 +141,16 @@ elif [ $input = "4" ]; then
         fi
         done
 
-
-
-#5) (Custom) chmod converter----------------------------------------------------------------------------------------------------------------------DONE
+#5) Delete Temporary Files----------------------------------------------------------------------------------------------------------------------
 elif [ $input = "5" ]; then
+    find $(git ls-files . --exclude-standard --others) -iname "*.tmp" -type f -print0 | while IFS= read -d $'\0' files; do
+        rm $files
+        done
 
+
+
+#6) (Custom) chmod converter----------------------------------------------------------------------------------------------------------------------DONE
+elif [ $input = "6" ]; then
     printf "Path of the directory:"
     read dirPath
     printf "Extension:"
@@ -157,7 +162,5 @@ elif [ $input = "5" ]; then
             chmod $chmodNum $files
             done
         done
-
-
 
 fi

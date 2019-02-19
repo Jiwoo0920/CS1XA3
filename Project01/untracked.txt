@@ -1,0 +1,13 @@
+README.md
+abc.py
+error.py
+file2.txt
+hello.hs
+logs/compile_fail.log
+logs/merge.log
+logs/todo.log
+myfile.hs
+myfile2.hs
+project_analyze.sh
+sample.py
+testtest.py
