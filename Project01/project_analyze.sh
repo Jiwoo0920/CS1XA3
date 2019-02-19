@@ -1,10 +1,13 @@
 #! /bin/bash
 cd ..
 echo "Please read README.md for description of the features"
-printf "Please select a feature:\n1:TODO Log\n2:Merge Log\n3:Another Feature\n4:Compile Error Log\n5:Delete Temporary Files\n6:(Custom) chmod converter \nFeature:"
+printf "\n"
+printf "Please select a feature:\n1:TODO Log\n2:Merge Log\n3:Another Feature\n4:Compile Error Log\n5:Delete Temporary Files\n6:(Custom 1) chmod Converter\n7:(Custom 2) chmod Friendly Reminder \nFeature:"
+
 read input
 # Part 1: Interactive script (5pt) + TODO Log (5 pt)
 # Part 2: Merge Log (5 pt) + [BONUS: File Type Count (5pt) + Compile Error Log (10pt)]
+printf "\n"
 
 #1) TODO Log--------------------------------------------------------------------------------------------------------------------------------------DONE
 if [ $input = "1" ]; then
@@ -149,7 +152,7 @@ elif [ $input = "5" ]; then
 
 
 
-#6) (Custom) chmod converter----------------------------------------------------------------------------------------------------------------------DONE
+#6) (Custom 1) chmod converter----------------------------------------------------------------------------------------------------------------------DONE
 elif [ $input = "6" ]; then
     printf "Path of the directory:"
     read dirPath
@@ -162,5 +165,17 @@ elif [ $input = "6" ]; then
             chmod $chmodNum $files
             done
         done
+
+
+#7) (Custom 2) chmod Friendly Reminder-------------------------------------------------------------------------------------------------------------
+elif [ $input = "7" ]; then
+    printf "User:"
+    read user
+    printf "Group:"
+    read group
+    printf "Everyone else:"
+    read everyoneElse
+    declare -A chmods=( [rwx]=7 [rw_]=6 [r_x]=5 [r__]=4 [_wx]=3 [_w_]=2 [__x]=1 [___]=0 )
+    echo "chmod = " ${chmods[$user]}${chmods[$group]}${chmods[$everyoneElse]}
 
 fi

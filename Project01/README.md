@@ -2,8 +2,8 @@
 **Name:** Jiwoo Lee  
 **MacID:** leej229
 
-**Last Update:** Feb 15, 2019 (10:38 AM)  
-**Status:** Finished Part 1
+**Last Update:** Feb 18, 2019 (10:55 AM)  
+**Status:** In process of Part 2
 
 # Description
 This project is designed to make an interactive bash script that takes user input to perform specific features in a repository.
@@ -23,7 +23,8 @@ Please select a feature:
 2) Merge Log
 3) File Type Count
 4) Compile Error Log
-5) (Custom) chmod Converter
+5) Delete Temporary Files
+6) (Custom) chmod Converter
 Feature:
 ```
 
@@ -80,7 +81,19 @@ and hit enter.
     ```
 * Once it is successfully executed, the script will terminate, and the user will now able to access **compile_fail.log** in **~/CS1XA3/Project01/logs** directory with all the **.py** and **.hs** files that failed to compile
 
-### 5) (Custom) chmod Converter
+### 5) Delete Temporary Files
+* Finds and deletes all **untracked** files ending in the extension **.tmp**
+*  To execute this feautre, simply input the following and hit enter (no further steps needed)
+    ```
+    Feature: 5
+    ```
+* Once it is successfully executed, all untracked files in your repo with the extension **.tmp** will be removed 
+* **Note:** you can generate a list of all untracked files from the current directory by typing the following in the command line:
+    ```
+    git ls-files . --exclude-standard --others
+    ```
+
+### 6) (Custom 1) chmod Converter
 * This feature allows user to change permissions based on extension of the files in a specific directory
 * The following lines are what the user will see when he/she first executes this feature: 
     ```
@@ -102,9 +115,44 @@ and hit enter.
     chmod: 777
     ```
     * The two extensions must be separated by a space in between
-* To execute this feautre, simply input the following and hit enter (no further steps needed)
+* To execute this feautre, simply input the following and hit enter
     ```
-    Feature: 5
+    Feature: 6
     ```
 * Once it is successfully executed, the script will terminate, and the permissions of the desired files will be converted to the desired chmod number (type ls -la on the command line to check permissions)
 
+### 7) (Custom 2) chmod Friendly Reminder
+* In case the user have forgotten (or is too lazy to calculate) the chmod number, this feature takes the **letter version** of chmod (ie. rwx) and converts to its corresponding **chmod number**
+* The following lines are what the user will see when he/she first executes this feature: 
+    ```
+    User:
+    Group:
+    Everyone Else:
+    ```
+* The user is to input any of the followings as input:
+    ```
+    rwx 
+    rw_ 
+    r_x 
+    r__ 
+    _wx 
+    _w_ 
+    __x 
+    ___
+    ```
+* For example, if the user inputs:
+    ```
+    User: rwx
+    Group: rw_ 
+    Everyone Else: __x
+    ```
+* It will output the following in command line:
+    ```
+    chmod = 761
+    ```
+* This feature is to be used alongside with feature #6
+* To execute this feautre, simply input the following and hit enter
+    ```
+    Feature: 7
+    ```
+* Once it is successfully executed, the script will terminate, and the corresponding chmod number will be outputted to command line
