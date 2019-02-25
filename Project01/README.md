@@ -2,8 +2,8 @@
 **Name:** Jiwoo Lee  
 **MacID:** leej229
 
-**Last Update:** Feb 18, 2019 (10:55 AM)  
-**Status:** In process of Part 2
+**Last Update:** Feb 25, 2019  
+**Status:** Finished Part 2
 
 # Description
 This project is designed to make an interactive bash script that takes user input to perform specific features in a repository.
@@ -25,6 +25,7 @@ Please select a feature:
 4) Compile Error Log
 5) Delete Temporary Files
 6) (Custom) chmod Converter
+7) (Custom) chmod Friendly Reminder
 Feature:
 ```
 
