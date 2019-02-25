@@ -11,7 +11,7 @@ printf "\n"
 
 #1) TODO Log--------------------------------------------------------------------------------------------------------------------------------------DONE
 if [ $input = "1" ]; then
-    #Create necessary dir/file; if exist already delete and create again
+    #Create necessary file; if exist already delete and create again
     if [ -f ~/CS1XA3/Project01/logs/todo.log ]; then
         touch ~/CS1XA3/Project01/logs/todo.log
     else
@@ -22,6 +22,7 @@ if [ $input = "1" ]; then
 
 #2) Merge Log-------------------------------------------------------------------------------------------------------------------------------------DONE
 elif [ $input = "2" ]; then
+    #Create necessary file; if exist already delete and create again
     if [ -f ~/CS1XA3/Project01/logs/merge.log ]; then
         rm ~/CS1XA3/Project01/logs/merge.log
         touch ~/CS1XA3/Project01/logs/merge.log
@@ -29,23 +30,23 @@ elif [ $input = "2" ]; then
         touch ~/CS1XA3/Project01/logs/merge.log
     fi
 
-    tmpFile1=$(mktemp)
+    tmpFile1=$(mktemp) #make temporary files to aid grep
     tmpFile2=$(mktemp)
     git log --oneline >> $tmpFile1
     grep -i "merge" $tmpFile1 > $tmpFile2
-    cut -d " " -f 1 $tmpFile2 >> ~/CS1XA3/Project01/logs/merge.log
+    cut -d " " -f 1 $tmpFile2 >> ~/CS1XA3/Project01/logs/merge.log  #You only want commit hashes; cut commit comment
 
 #3) File Type Count-------------------------------------------------------------------------------------------------------------------------------DONE
 elif [ $input = "3" ]; then
-    result=()
+    result=()   #An empty array where the number of files for each type will be appended to
     #HTML----------------------------------------------------------------------------------------
     html=$(mktemp)
     find ~/CS1XA3 -iname "*.html" -type f -print0 | while IFS= read -d $'\0' files; do
         echo $files >> $html
         done
     if [ -s $html ]; then
-        result1=$(wc -l $html | cut -d " " -f 1)
-        result+=($result1)
+        result1=$(wc -l $html | cut -d " " -f 1)   #Only want the number; cut file name
+        result+=($result1)   #append to the array
     else
         result+=(0)
     fi
@@ -112,7 +113,7 @@ elif [ $input = "3" ]; then
 
 #4) Compile Error Log--------------------------------------------------------------------------------------------------------------------------------
 elif [ $input = "4" ]; then
-    #Create compile_fail.log
+    #Create compile_fail.log; if exists already delete and create again
     if [ -f ~/CS1XA3/Project01/logs/compile_fail.log ]; then
         rm ~/CS1XA3/Project01/logs/compile_fail.log
         touch ~/CS1XA3/Project01/logs/compile_fail.log
@@ -122,22 +123,22 @@ elif [ $input = "4" ]; then
 
     #Find python files that failed to compile
     find ~/CS1XA3 -iname "*.py" -type f -print0 | while IFS= read -d $'\0' files; do
-        python -m py_compile $files 2> /dev/null
-        if [ $? -ne 0 ]; then
+        python -m py_compile $files 2> /dev/null   #Ignore compile/error message
+        if [ $? -ne 0 ]; then   #If there's no output from compile
             echo $files >> ~/CS1XA3/Project01/logs/compile_fail.log
         else
-            rm $files"c"
+            rm $files"c"   #Else if compile succeeds, delete all .pyc files
         fi
         done
 
 
     #Find Haskell files that failed to compile
     find ~/CS1XA3 -iname "*.hs" -type f -print0 | while IFS= read -d $'\0' files; do
-        ghc $files >/dev/null 2>/dev/null
+        ghc $files >/dev/null 2>/dev/null   #Ignore compile/error message
         if [ $? -ne 0 ]; then
             echo $files >> ~/CS1XA3/Project01/logs/compile_fail.log
         else
-            name=$(echo $files | cut -f1 -d".")
+            name=$(echo $files | cut -f1 -d".")  #If compile succeeds, detele all compiled files
 	    rm $name
             rm $name".hi"
             rm $name".o"
@@ -154,6 +155,7 @@ elif [ $input = "5" ]; then
 
 #6) (Custom 1) chmod converter----------------------------------------------------------------------------------------------------------------------DONE
 elif [ $input = "6" ]; then
+    #Get user input
     printf "Path of the directory:"
     read dirPath
     printf "Extension:"
@@ -161,7 +163,7 @@ elif [ $input = "6" ]; then
     printf "Chmod:"
     read chmodNum
     for item in $extension; do
-        find $dirPath -iname "*.${item}" -type f -print0 | while IFS= read -d $'\0' files ; do
+        find $dirPath -iname "*${item}" -type f -print0 | while IFS= read -d $'\0' files ; do
             chmod $chmodNum $files
             done
         done
@@ -169,12 +171,14 @@ elif [ $input = "6" ]; then
 
 #7) (Custom 2) chmod Friendly Reminder-------------------------------------------------------------------------------------------------------------
 elif [ $input = "7" ]; then
+    #Get user input
     printf "User:"
     read user
     printf "Group:"
     read group
     printf "Everyone else:"
     read everyoneElse
+    #Create a dictionary for the possible chmod inputs
     declare -A chmods=( [rwx]=7 [rw_]=6 [r_x]=5 [r__]=4 [_wx]=3 [_w_]=2 [__x]=1 [___]=0 )
     echo "chmod = " ${chmods[$user]}${chmods[$group]}${chmods[$everyoneElse]}
 
