@@ -5,8 +5,6 @@ printf "\n"
 printf "Please select a feature:\n1:TODO Log\n2:Merge Log\n3:Another Feature\n4:Compile Error Log\n5:Delete Temporary Files\n6:(Custom 1) chmod Converter\n7:(Custom 2) chmod Friendly Reminder \nFeature:"
 
 read input
-# Part 1: Interactive script (5pt) + TODO Log (5 pt)
-# Part 2: Merge Log (5 pt) + [BONUS: File Type Count (5pt) + Compile Error Log (10pt)]
 printf "\n"
 
 #1) TODO Log--------------------------------------------------------------------------------------------------------------------------------------DONE
