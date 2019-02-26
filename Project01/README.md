@@ -106,7 +106,7 @@ and hit enter.
 * For example, if the user wants to change permission of all python files in **~/CS1XA3** directory to give full rwx permission to only the user, input:
     ```
     Path of Directory: ~/CS1XA3
-    Extension: py
+    Extension: .py
     chmod: 700
     ```
 * You can also change permissions of multiple extensions. For example, if you want to change permissions of all python and haskell files in in **~/CS1XA3** directory to give full rwx permission to everyone, input:
