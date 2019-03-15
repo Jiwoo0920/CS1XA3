@@ -16,9 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from django.http import HttpResponse
+root = "e/leej229/"
 
-root_path = 'e/leej229/'
 urlpatterns = [
-    path(root_path, include("helloapps.urls")),
+    path(root, include("testreq.urls")),
+    path(root, include("lab7.urls")),
 ]

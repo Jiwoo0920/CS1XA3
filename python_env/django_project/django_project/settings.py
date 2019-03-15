@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'kob@r5$j4grv&msqghp!ej3mmf%goeq4#utz*2jh$+cv^3h^qp'
+SECRET_KEY = '=t(8-n032=5yoc%knq)kh0bla_y)$cj8gfl=h6%#pi*l2600v)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -29,15 +29,10 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-INSTALLED_APPS = [
-    'helloapp.apps.HelloappConfig',
-      # <appname>.apps.<classname>
-    ...   
-]
-
-
 
 INSTALLED_APPS = [
+    'testreq.apps.TestreqConfig',
+    'lab7.apps.Lab7Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,7 +45,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
