@@ -4974,7 +4974,7 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
-		{myPass: '', myUser: '', name: '', password: '', passwordAgain: '', response: ''},
+		{name: '', password: '', passwordAgain: '', response: ''},
 		elm$core$Platform$Cmd$none);
 };
 var elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5924,11 +5924,15 @@ var author$project$Main$update = F2(
 			case 'ButtonPushed':
 				var name = msg.a;
 				var password = msg.b;
-				return _Utils_Tuple2(
+				return _Utils_eq(model.password, model.passwordAgain) ? _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{myPass: password, myUser: name}),
-					A2(author$project$Main$testlab, model.myUser, model.myPass));
+						{name: name, password: password}),
+					A2(author$project$Main$testlab, model.name, model.password)) : _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{response: 'Bad User Name'}),
+					elm$core$Platform$Cmd$none);
 			default:
 				var result = msg.a;
 				if (result.$ === 'Ok') {

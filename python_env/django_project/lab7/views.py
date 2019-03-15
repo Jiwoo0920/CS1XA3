@@ -9,4 +9,12 @@ def isValid(request):
         return HttpResponse("Cool")
     return HttpResponse("Bad User Name")
 
-    return HttpResp
+#def isValid(request):
+#    user = request.POST.get("user","")
+#    password = request.POST.get("password","")
+#    passwordAgain = request.POST.get("passwordAgain", "")
+#    if user == "Jimmy" and password == "Hendrix" and passwordAgain == "Hendrix":
+#        return HttpResponse("Cool")
+#    return HttpResponse("Bad User Name")
+
+#    return HttpResp
