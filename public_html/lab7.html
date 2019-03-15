@@ -5888,11 +5888,11 @@ var elm$http$Http$post = function (r) {
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
 var elm$http$Http$stringBody = _Http_pair;
-var author$project$Main$testlab = F2(
-	function (myUser, myPass) {
+var author$project$Main$testpost = F3(
+	function (name, password, passwordAgain) {
 		return elm$http$Http$post(
 			{
-				body: A2(elm$http$Http$stringBody, 'application/x-www-form-urlencoded', 'user=' + (myUser + ('&password=' + myPass))),
+				body: A2(elm$http$Http$stringBody, 'application/x-www-form-urlencoded', 'user=' + (name + ('&password=' + (password + ('&passwordAgain=' + passwordAgain))))),
 				expect: elm$http$Http$expectString(author$project$Main$GotText),
 				url: 'https://mac1xa3.ca/e/leej229/lab7/'
 			});
@@ -5924,15 +5924,12 @@ var author$project$Main$update = F2(
 			case 'ButtonPushed':
 				var name = msg.a;
 				var password = msg.b;
-				return _Utils_eq(model.password, model.passwordAgain) ? _Utils_Tuple2(
+				var passwordAgain = msg.c;
+				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{name: name, password: password}),
-					A2(author$project$Main$testlab, model.name, model.password)) : _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{response: 'Bad User Name'}),
-					elm$core$Platform$Cmd$none);
+						{name: name, password: password, passwordAgain: passwordAgain}),
+					A3(author$project$Main$testpost, model.name, model.password, model.passwordAgain));
 			default:
 				var result = msg.a;
 				if (result.$ === 'Ok') {
@@ -5959,9 +5956,9 @@ var author$project$Main$Password = function (a) {
 var author$project$Main$PasswordAgain = function (a) {
 	return {$: 'PasswordAgain', a: a};
 };
-var author$project$Main$ButtonPushed = F2(
-	function (a, b) {
-		return {$: 'ButtonPushed', a: a, b: b};
+var author$project$Main$ButtonPushed = F3(
+	function (a, b, c) {
+		return {$: 'ButtonPushed', a: a, b: b, c: c};
 	});
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
@@ -5998,14 +5995,14 @@ var elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		elm$json$Json$Decode$succeed(msg));
 };
-var author$project$Main$viewButton = F3(
-	function (name, pass, msg) {
+var author$project$Main$viewButton = F4(
+	function (name, password, passwordAgain, msg) {
 		return A2(
 			elm$html$Html$button,
 			_List_fromArray(
 				[
 					elm$html$Html$Events$onClick(
-					A2(author$project$Main$ButtonPushed, name, pass))
+					A3(author$project$Main$ButtonPushed, name, password, passwordAgain))
 				]),
 			_List_fromArray(
 				[
@@ -6113,7 +6110,7 @@ var author$project$Main$view = function (model) {
 				A4(author$project$Main$viewInput, 'password', 'Password', model.password, author$project$Main$Password),
 				A4(author$project$Main$viewInput, 'password', 'Re-enter Password', model.passwordAgain, author$project$Main$PasswordAgain),
 				author$project$Main$viewValidation(model),
-				A3(author$project$Main$viewButton, model.name, model.password, 'Log In'),
+				A4(author$project$Main$viewButton, model.name, model.password, model.passwordAgain, 'Log In'),
 				author$project$Main$viewText(model.response)
 			]));
 };
