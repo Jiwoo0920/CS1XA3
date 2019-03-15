@@ -7,7 +7,7 @@
 
 # Description
 A Personal CV/Resume Webpage for Co-op.  
-For more information about this project, please refer to [this link](https://mac1xa3.ca/Projects/Project02.pdf).
+For more information about this project, please refer to [this link](https://mac1xa3.ca/Projects/Project02.pdf).  
 Website can be found [here](https://mac1xa3.ca/u/leej229/webpagecv.html)
 
 # References
