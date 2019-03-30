@@ -9,12 +9,13 @@
 ## Personal CV / Resume Webpage
 A Personal CV/Resume Webpage for Co-op. Used an open-source template provided by [webthemez](https://webthemez.com/).  
 For more information about this project, please refer to [this link](https://mac1xa3.ca/Projects/Project02.pdf).
-
+  
 Website can be reached [here](https://mac1xa3.ca/u/leej229/)  
-Web app can be accessed [here](https://mac1xa3.ca/u/leej229/simpleapp.html)
 
 ## Web App: 2 Player Tic Tac Toe
-A simple web app built in Elm; recreated 2 player Tic Tac Toe game with numerous custom features and customization options. 
+A simple web app built in Elm; recreated 2 player Tic Tac Toe game with numerous custom features and customization options.   
+  
+Web app can be accessed [here](https://mac1xa3.ca/u/leej229/simpleapp.html)
 
 # Basic Functionality of 2 Player Tic Tac Toe
 ## Features
