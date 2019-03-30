@@ -10,12 +10,10 @@ For more information about this project, please refer to [this link](https://mac
 
 ## Personal CV / Resume Webpage
 A Personal CV/Resume Webpage for Co-op. Used an open-source template provided by [webthemez](https://webthemez.com/).  
-
 Website can be reached [here](https://mac1xa3.ca/u/leej229/)  
 
 ## Web App: 2 Player Tic Tac Toe
 A simple web app built in Elm; recreated 2 player Tic Tac Toe game with numerous custom features and customization options.   
-  
 Web app can be accessed [here](https://mac1xa3.ca/u/leej229/simpleapp.html)
 
 # Basic Functionality of 2 Player Tic Tac Toe
@@ -50,7 +48,7 @@ Web app can be accessed [here](https://mac1xa3.ca/u/leej229/simpleapp.html)
 
 **4) Randomize Starting Player**
 * Randomizes the initial starting player
-* Doesn't immediately changes the player; need to press **Start Over** button to hold effect
+* Doesn't immediately change the player; need to press **Start Over** button to take effect
 * Once the player activates this feature, it will be turned on untill the player turns off (doesn't turn off automatically once pressing **Start Over** button)
 * If conditions are met so that the players can turn on this feature, the **Randomize Starting Player** button located below the board will be filled with green (otherwise grey) to notify the user
 * The status of this feature (whether it is turned on/off) will be dispayed as either "ON" or "OFF" in the **Randomize Starting Player** button itself
@@ -65,7 +63,7 @@ Web app can be accessed [here](https://mac1xa3.ca/u/leej229/simpleapp.html)
 **6) Change Theme**
 * There are a total of 15 themes in this game
 * Themes can be changed at any point of the game, in any mode
-* To switch between themes, navigate through the options by pressing the left/right triangle-shaped buttons located on the edges of the **Change Theme** button
+* To switch between themes, navigate through the options by clicking the left/right triangle-shaped buttons located on the edges of the **Change Theme** button
 * Themes are changed automatically, and does not reset to default upon pressing **Start Over** or **Change Mode** buttons
 
 
