@@ -52,6 +52,7 @@ Web app can be accessed [here](https://mac1xa3.ca/u/leej229/simpleapp.html)
 * Once the player activates this feature, it will be turned on untill the player turns off (doesn't turn off automatically once pressing **Start Over** button)
 * If conditions are met so that the players can turn on this feature, the **Randomize Starting Player** button located below the board will be filled with green (otherwise grey) to notify the user
 * The status of this feature (whether it is turned on/off) will be dispayed as either "ON" or "OFF" in the **Randomize Starting Player** button itself
+* While this feature is turned on, you cannot use **Switch Starting Player** feature
 
 **5) Switch Starting Player**
 * Automatically switches the starting Player
@@ -59,6 +60,7 @@ Web app can be accessed [here](https://mac1xa3.ca/u/leej229/simpleapp.html)
 * You can only switch starting player when the board is cleared (cannot switch in between games)
 * If conditions are met so that you can use this feature, the **Switch Starting Player** located below the baord will be filled with green (otherwise grey) to notify the user
 * Current player is displayed in the upper-left corner of the page with corresponding player colours
+* Cannot use this feature if **Randomize Starting Player** feature is turned on 
 
 **6) Change Theme**
 * There are a total of 15 themes in this game
