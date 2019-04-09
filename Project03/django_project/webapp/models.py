@@ -12,7 +12,6 @@ class UserInfoManager(models.Manager):
 class UserInfo(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,primary_key=True)
     highscore = models.IntegerField(default=0)
-
     objects = UserInfoManager()
 
 
