@@ -8,7 +8,12 @@ import Url
 import Random
 import List exposing(..)
 import Tuple exposing(..)
-import String 
+import String exposing(..)
+import Json.Encode as E
+import Json.Decode as D
+import Html exposing (..)
+import Html.Attributes
+import Http
 
 --<<Type Declaration>>
 type Msg = Tick Float GetKeyState
@@ -17,6 +22,14 @@ type Msg = Tick Float GetKeyState
          | DecideBigPlayer Player
          | ChangeColorThemeRight
          | ChangeColorThemeLeft
+         | LogInScreen
+         | GotoSignUpScreen
+         | SignUpScreen
+         | GoBack
+         | LogOutScreen
+         | GotLoginResponse (Result Http.Error String) 
+         | Highscore_JSONResponse (Result Http.Error HighScore)
+
 
 type Player = Player1 | Player2 | None
 
@@ -24,9 +37,14 @@ type State = Jump | NotJump
 
 type GameStatus = Start | InProgress | End
 
+type Screen = Login | SignUp | Game GameStatus 
+
 type ColorTheme = Theme1 | Theme2 | Theme3 | Theme4 | Theme5 | Theme6 | Theme7 | Theme8 
 
-type alias Model = { gameStatus : GameStatus
+type alias Model = { screen : Screen
+                   , user : String
+                   , password : String 
+                   , error : String 
                    , player1_pos : (Float,Float)
                    , player2_pos : (Float, Float)
                    , count : Int
@@ -35,7 +53,13 @@ type alias Model = { gameStatus : GameStatus
                    , points : Int 
                    , jumpingPlayer : Player
                    , theme : ColorTheme
+                   , highscore : Int 
                    } 
+
+--Need for server
+type alias HighScore = { username : String, score : Int }
+
+type alias UsernamePassword = { username : String , password : String }
 
 --<<Helper Functions>>-------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Function to get the jumping motion
@@ -71,7 +95,7 @@ isCollisionNoJump (a,b) (c,d) = a+16 >c  && c > -6
 --Helper function to tell if both bigPlayer and jumpingPlayer are the same
 playerMatch : Player -> Player -> Bool 
 playerMatch a b = 
-    if all (\x->x==Player1) [a,b] || all (\x->x==Player2) [a,b] then True 
+    if List.all (\x->x==Player1) [a,b] || List.all (\x->x==Player2) [a,b] then True 
     else False 
 
 --Final collision function
@@ -142,13 +166,16 @@ colorThemeToString colorTheme =
 
 --textOutline (to avoid repetition)
 textOutline : String -> Float -> Shape userMsg
-textOutline string n = text (string) |> bold |> sansserif |> size n |> filled black 
+textOutline string n = GraphicSVG.text (string) |> bold |> sansserif |> size n |> filled black 
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
 init flags url key = 
-    let model = { gameStatus = Start
+    let model = { screen = Login
+                , user = ""
+                , password = ""
+                , error = ""
                 , player1_pos = (-30,-10)----function model = let (a,b)=model.player1pos in update b
                 , player2_pos = (30,-10) 
                 , count = 0
@@ -157,6 +184,7 @@ init flags url key =
                 , points = 0
                 , jumpingPlayer = None
                 , theme = Theme1
+                , highscore = 0
                 }
     in ( model , randDecideSize) -- add init model
 
@@ -205,7 +233,7 @@ update msg model = case msg of
                                     , bigPlayer = None
                                     , points = 0
                                     , jumpingPlayer = None
-                                    , gameStatus = InProgress
+                                    , screen = Game InProgress
                                     }
 
                 resetModel = {model | player1_pos = (-114,-10)
@@ -216,11 +244,15 @@ update msg model = case msg of
                                     , points = model.points + 1}
 
             in --CASE 1) if game over and player presses spacebar to restart
-                if model.gameStatus == Start  && restart == False then (model,Cmd.none)
-                else if restart && (model.gameStatus == End || model.gameStatus == Start) then (restartModel, randDecideSize)
+                if model.screen == Login || model.screen == SignUp then (model,Cmd.none)
+                else if model.screen == Game Start  && restart == False then (model,Cmd.none)
+                else if restart && (model.screen == Game End || model.screen == Game Start) then (restartModel, randDecideSize)
                 --CASE 2)if there's a collision, end game 
                 else if isCollision model.bigPlayer model.jumpingPlayer model.player1_pos model.player2_pos then 
-                    ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, gameStatus = End },Cmd.none)
+                    let
+                        newHighscore = if model.points > model.highscore then model.points else model.highscore 
+                    in
+                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, highscore = newHighscore },Cmd.none)
                 
                 --CASE 3) for 100 ticks, move players, after 100 ticks, reset to original position
                 else if model.count < 100 then
@@ -249,7 +281,7 @@ update msg model = case msg of
                         ({model | player1_pos = updatePos (model.player1_pos) (2.5,-10)
                                 , player2_pos = updatePos (model.player2_pos) (-2.5,-10)
                                 , count = model.count + 1
-                                , gameStatus = InProgress }
+                                , screen = Game InProgress }
                         , Cmd.none)
 
                 --CASE 4) if time == 2 seconds, reset to original position
@@ -264,83 +296,231 @@ update msg model = case msg of
 
         ChangeColorThemeLeft -> ({model | theme = changeThemeLeft model.theme}, Cmd.none)
 
+        --Login
+        LogInScreen -> ({model | screen = Game Start}, Cmd.none) --won't need it later
+        
+        GotoSignUpScreen -> ({model | screen = SignUp}, Cmd.none) --you need it 
+
+        SignUpScreen -> (model,Cmd.none)
+
+        LogOutScreen -> ({model | screen = Login}, Cmd.none)
+
+        GoBack -> ({model | screen = Login}, Cmd.none)
+
+
+        --SERVER 
+        --Highscore
+        Highscore_JSONResponse result ->
+            case result of
+                Ok newHighcore ->
+                    ( model, Cmd.none )
+                Err error ->
+                    ( handleError model error, Cmd.none )
+
+        --User Authentication 
+        GotLoginResponse result ->
+            case result of
+                Ok "LoginFailed" ->
+                    ( { model | error = "failed to login" }, Cmd.none )
+                Ok _ ->
+                    ( { model | screen = Game Start}, Cmd.none)
+                    -- ( model, load (rootUrl ++ "static/userpage.html") )
+                Err error ->
+                    ( handleError model error, Cmd.none )
+
+
+--error 
+handleError : Model -> Http.Error -> Model
+handleError model error =
+    case error of
+        Http.BadUrl url ->
+            { model | error = "bad url: " ++ url }
+        Http.Timeout ->
+            { model | error = "timeout" }
+        Http.NetworkError ->
+            { model | error = "network error" }
+        Http.BadStatus i ->
+            { model | error = "bad status " ++ String.fromInt i }
+        Http.BadBody body ->
+            { model | error = "bad body " ++ body }
+
+
 --<<View>>
 view : Model -> { title : String, body : Collage Msg }
 view model = 
     let title = "Clash!"
         body = collage 101 150 shapes
-        shapes = [ background, caption, points, startText, gameOver, highScoreBoard, theme, floor, player1, player2 ] 
+        shapes =
+            case model.screen of
+                Login -> 
+                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username"] [])
+                        |> move (0,35)
+                    , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password"] [])
+                        |> move (0,20)
+                    , loginTitle
+                    , userBox 
+                    , passwordBox
+                    , loginButton
+                    , gotoSignUpButton
+                    ]
+                SignUp -> 
+                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username"] [])
+                        |> move (0,35)
+                    ,   html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password"] [])
+                        |> move (0,20)
+                    , signUpTitle
+                    , userBox 
+                    , passwordBox
+                    , signUpButton
+                    , goBackButton
 
+                    ]
+                Game _ ->
+                    [ background, caption, points, startText, gameOver, highScoreBoard, theme, floor, player1, player2, logoutButton ] 
+                
+
+        --Screen: LOGIN
+        loginTitle = textOutline "Login" 12
+            |> move (-18,40)
+
+        loginButton = group [loginShape,loginText]
+            |> move (-20,-13)
+            |> scale 0.7
+            |> notifyTap LogInScreen
+
+        loginShape = rect 30 10 
+            |> filled grey 
+            |> addOutline(solid 0.7) black 
+
+        loginText = textOutline "Login" 6
+            |> move (-8,-2)
+
+        userBox = group [userShape,userText]
+            |> move (-20,22.7)
+
+        userShape = rect 30 10.5
+            |> filled lightRed 
+            |> addOutline(solid 0.7) black 
+
+        userText = textOutline "Username" 5
+            |> move (-12,-2)
+      
+        passwordBox = group [passwordShape,passwordText]
+            |> move (-20,8)
+
+        passwordShape = rect 30 10.5
+            |> filled blue 
+            |> addOutline(solid 0.7) black 
+
+        passwordText = textOutline "Password" 5
+            |> move (-12,-2)
+
+        gotoSignUpButton = group [gotoSignUpShape,gotoSignUpText]
+            |> move (15,-13)
+            |> scale 0.7
+            |> notifyTap GotoSignUpScreen
+
+        gotoSignUpShape = rect 30 10 
+            |> filled grey 
+            |> addOutline(solid 0.7) black 
+        
+        gotoSignUpText = textOutline "Sign up" 6
+            |> move (-10,-2)
+        
+        --Screen: SIGNUP
+        signUpTitle = textOutline "Sign Up" 12
+            |> move (-24,40)
+
+        signUpButton = group [signUpShape,signUpText]
+            |> move (15,-13)
+            |> scale 0.7
+            |> notifyTap SignUpScreen
+
+        signUpShape = rect 30 10 
+            |> filled grey 
+            |> addOutline(solid 0.7) black 
+
+        signUpText = textOutline "Sign up" 6
+            |> move (-10,-2)
+        
+        goBackButton = group [goBackShape,goBackText]
+            |> move (-20,-13)
+            |> scale 0.7
+            |> notifyTap GoBack
+
+        goBackShape = rect 30 10 
+            |> filled grey 
+            |> addOutline(solid 0.7) black 
+
+        goBackText = textOutline "Go Back" 6
+            |> move (-12,-2)
+        
+        --Screen: GAME
         caption = textOutline "Clash!" 10
             |> move (-13,54)
 
-        points = text ("Points: " ++ (String.fromInt model.points)) 
+        points = GraphicSVG.text ("Points: " ++ (String.fromInt model.points)) 
             |> sansserif
             |> bold 
             |> size 4
-            |> (if model.gameStatus == Start then filled blank else filled black)
+            |> (if model.screen == Game Start then filled blank else filled black)
             |> move (-7,47)
 
         startText = group [gameStart, instructions1, instructions2, instructions3, instructions4]
             |> move (0,4)
 
-        instructions1 = text ("Instructions")
+        instructions1 = GraphicSVG.text ("Instructions")
             |> sansserif
             |> bold 
             |> underline
             |> size 5
-            |> (if model.gameStatus == Start then filled black else filled blank)
+            |> (if model.screen == Game Start then filled black else filled blank)
             |> move (-13,40)
 
-        instructions2 = text "-Press Q to jump Player 1"
+        instructions2 = GraphicSVG.text "-Press Q to jump Player 1"
             |> sansserif
             |> bold 
             |> size 3
-            |> (if model.gameStatus == Start then filled black else filled blank)
+            |> (if model.screen == Game Start then filled black else filled blank)
             |> move (-17,35)
         
-        instructions3 = text ("-Press W to jump Player 2")
+        instructions3 = GraphicSVG.text ("-Press W to jump Player 2")
             |> sansserif
             |> bold 
             |> size 3
-            |> (if model.gameStatus == Start then filled black else filled blank)
+            |> (if model.screen == Game Start then filled black else filled blank)
             |> move (-17,30)     
 
-        instructions4 = text ("-Big guy jumps over the small guy")
+        instructions4 = GraphicSVG.text ("-Big guy jumps over the small guy")
             |> sansserif
             |> bold 
             |> size 3
-            |> (if model.gameStatus == Start then filled black else filled blank)
+            |> (if model.screen == Game Start then filled black else filled blank)
             |> move (-22,25)    
 
-        gameStart = text ("Press Spacebar to Start!")
+        gameStart = GraphicSVG.text ("Press Spacebar to Start!")
             |> sansserif
             |> bold 
             |> size 5
-            |> (if model.gameStatus == Start then filled red else filled blank)
+            |> (if model.screen == Game  Start then filled red else filled blank)
             |> move (-29,15)
 
-        gameOver = text("Game Over! Press Spacebar to Restart!")
+        gameOver = GraphicSVG.text ("Game Over! Press Spacebar to Restart!")
             |> sansserif 
             |> bold
             |> size 5
-            |> (if model.gameStatus == End then filled red else filled blank)
+            |> (if model.screen == Game  End then filled red else filled blank)
             |> move (-46,35)
 
         highScoreBoard = group [highScore, user, highscorePoints]
 
-        highScore = text ("High Score: ")
-            |> sansserif 
-            |> bold
-            |> underline
-            |> size 4
-            |> filled black 
+        highScore = textOutline ("High Score: ") 4
             |> move (-50,-40)
        
         user = textOutline ("User: ") 3
             |> move (-50,-45)
 
-        highscorePoints = textOutline ("Points: ") 3
+        highscorePoints = textOutline ("Your highscore is: " ++ String.fromInt model.highscore ) 3
             |> move (-50,-50)
 
         background = square 100
@@ -410,7 +590,6 @@ view model =
                     |> rotate (0.7)
                     |> move (-1,2.5)
 
-        
         --theme
         theme = group [themeShape, themeText, rightTriangle, leftTriangle]
                 |> move (25,-41)
@@ -433,6 +612,19 @@ view model =
                 |> move (-18,0)
                 |> notifyTap ChangeColorThemeLeft
 
+        --logout
+        logoutButton = group [logoutShape,logoutText]
+            |> move (40,-75)
+            |> scale 0.7
+            |> notifyTap LogOutScreen
+
+        logoutShape = rect 30 10 
+            |> filled grey 
+            |> addOutline(solid 0.7) black 
+
+        logoutText = textOutline "Logout" 6
+            |> move (-10,-2)
+
     in { title = title , body = body }
 
 --<<Other>>
@@ -448,3 +640,51 @@ main = appWithTick Tick
        , onUrlRequest = MakeRequest
        , onUrlChange = UrlChange
        } 
+
+--SERVER------------------------
+rootUrl = "e/leej229/"
+
+---USER AUTHENTICATION
+userPassEncoder : Model -> E.Value 
+userPassEncoder model = 
+    E.object 
+        [ ("username", E.string model.user)
+        , ("password", E.string model.password)
+        ]
+
+userPassDecoder : D.Decoder UsernamePassword 
+userPassDecoder =
+    D.map2 UsernamePassword
+        (D.field "username" D.string)
+        (D.field "password" D.string)
+
+loginPost : Model -> Cmd Msg
+loginPost model =
+    Http.post
+        { url = rootUrl ++ "webapp/"
+        , body = Http.jsonBody <| userPassEncoder model
+        , expect = Http.expectString GotLoginResponse
+        }
+
+--JSON HIGHSCORE
+highscoreEncoder : Model -> E.Value 
+highscoreEncoder model =
+    E.object
+        [ ("username", E.string model.user)
+        , ("highscore", E.int model.points)
+        ]
+
+highscoreDecoder : D.Decoder HighScore  
+highscoreDecoder = 
+    D.map2 HighScore
+        (D.field "User" D.string)
+        (D.field "highscore" D.int)
+
+sendHighscore : Model -> Cmd Msg
+sendHighscore model =
+    Http.post
+        { url = rootUrl ++ "webapp/"
+        , body = Http.jsonBody <| highscoreEncoder model
+        , expect = Http.expectJson Highscore_JSONResponse highscoreDecoder
+        }
+
