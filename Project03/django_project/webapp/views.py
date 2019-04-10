@@ -1,5 +1,5 @@
 #from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 import json
@@ -31,6 +31,7 @@ def view_highscore(request):
 	user = User.objects.get(username=username)
 	userinfo = UserInfo.objects.get(user=user)
 	userhighscore = userinfo.highscore
+#	return JsonResponse({'highscore':userhighscore})
 
 def sign_up(request):
 	json_req = json.loads(request.body)
@@ -44,6 +45,7 @@ def sign_up(request):
 		return HttpResponse('SignupFail')
 
 def login_user(request):
+	print("Printing body " + str(request.body))
 	json_req = json.loads(request.body)
 	uname = json_req.get('username','')
 	passw = json_req.get('password','')

@@ -42,7 +42,7 @@ type Screen = Login | SignUp | Game GameStatus
 type ColorTheme = Theme1 | Theme2 | Theme3 | Theme4 | Theme5 | Theme6 | Theme7 | Theme8 
 
 type alias Model = { screen : Screen
-                   , user : String
+                   , username : String
                    , password : String 
                    , error : String 
                    , player1_pos : (Float,Float)
@@ -57,9 +57,9 @@ type alias Model = { screen : Screen
                    } 
 
 --Need for server
-type alias HighScore = { username : String, score : Int }
+type alias HighScore = { username : String, highscore : Int }
 
-type alias UsernamePassword = { username : String , password : String }
+type alias User = { username : String , password : String }
 
 --<<Helper Functions>>-------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Function to get the jumping motion
@@ -173,7 +173,7 @@ textOutline string n = GraphicSVG.text (string) |> bold |> sansserif |> size n |
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
 init flags url key = 
     let model = { screen = Login
-                , user = ""
+                , username = ""
                 , password = ""
                 , error = ""
                 , player1_pos = (-30,-10)----function model = let (a,b)=model.player1pos in update b
@@ -252,7 +252,7 @@ update msg model = case msg of
                     let
                         newHighscore = if model.points > model.highscore then model.points else model.highscore 
                     in
-                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, highscore = newHighscore },Cmd.none)
+                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, highscore = newHighscore }, sendHighscore model )
                 
                 --CASE 3) for 100 ticks, move players, after 100 ticks, reset to original position
                 else if model.count < 100 then
@@ -297,7 +297,7 @@ update msg model = case msg of
         ChangeColorThemeLeft -> ({model | theme = changeThemeLeft model.theme}, Cmd.none)
 
         --Login
-        LogInScreen -> ({model | screen = Game Start}, Cmd.none) --won't need it later
+        LogInScreen -> (model, loginPost model) --won't need it later
         
         GotoSignUpScreen -> ({model | screen = SignUp}, Cmd.none) --you need it 
 
@@ -313,7 +313,7 @@ update msg model = case msg of
         Highscore_JSONResponse result ->
             case result of
                 Ok newHighcore ->
-                    ( model, Cmd.none )
+                    ( model, Cmd.none ) --edit model
                 Err error ->
                     ( handleError model error, Cmd.none )
 
@@ -343,6 +343,55 @@ handleError model error =
             { model | error = "bad status " ++ String.fromInt i }
         Http.BadBody body ->
             { model | error = "bad body " ++ body }
+
+
+
+--SERVER------------------------
+rootUrl = "e/leej229/"
+
+---USER AUTHENTICATION
+userPassEncoder : Model -> E.Value 
+userPassEncoder model = 
+    E.object 
+        [ ("username", E.string model.username)
+        , ("password", E.string model.password)
+        ]
+
+-- userPassDecoder : D.Decoder User 
+-- userPassDecoder =
+--     D.map2 User
+--         (D.field "username" D.string)
+--         (D.field "password" D.string)
+
+loginPost : Model -> Cmd Msg
+loginPost model =
+    Http.post
+        { url = rootUrl ++ "webapp/"
+        , body = Http.jsonBody <| userPassEncoder model
+        , expect = Http.expectString GotLoginResponse
+        }
+
+--JSON HIGHSCORE
+highscoreEncoder : Model -> E.Value 
+highscoreEncoder model =
+    E.object
+        [ ("username", E.string model.username)
+        , ("highscore", E.int model.highscore)
+        ]
+
+highscoreDecoder : D.Decoder HighScore  
+highscoreDecoder = 
+    D.map2 HighScore
+        (D.field "username" D.string)
+        (D.field "highscore" D.int)
+
+sendHighscore : Model -> Cmd Msg
+sendHighscore model =
+    Http.post
+        { url = rootUrl ++ "webapp/"
+        , body = Http.jsonBody <| highscoreEncoder model
+        , expect = Http.expectJson Highscore_JSONResponse highscoreDecoder 
+        }
 
 
 --<<View>>
@@ -641,50 +690,4 @@ main = appWithTick Tick
        , onUrlChange = UrlChange
        } 
 
---SERVER------------------------
-rootUrl = "e/leej229/"
-
----USER AUTHENTICATION
-userPassEncoder : Model -> E.Value 
-userPassEncoder model = 
-    E.object 
-        [ ("username", E.string model.user)
-        , ("password", E.string model.password)
-        ]
-
-userPassDecoder : D.Decoder UsernamePassword 
-userPassDecoder =
-    D.map2 UsernamePassword
-        (D.field "username" D.string)
-        (D.field "password" D.string)
-
-loginPost : Model -> Cmd Msg
-loginPost model =
-    Http.post
-        { url = rootUrl ++ "webapp/"
-        , body = Http.jsonBody <| userPassEncoder model
-        , expect = Http.expectString GotLoginResponse
-        }
-
---JSON HIGHSCORE
-highscoreEncoder : Model -> E.Value 
-highscoreEncoder model =
-    E.object
-        [ ("username", E.string model.user)
-        , ("highscore", E.int model.points)
-        ]
-
-highscoreDecoder : D.Decoder HighScore  
-highscoreDecoder = 
-    D.map2 HighScore
-        (D.field "User" D.string)
-        (D.field "highscore" D.int)
-
-sendHighscore : Model -> Cmd Msg
-sendHighscore model =
-    Http.post
-        { url = rootUrl ++ "webapp/"
-        , body = Http.jsonBody <| highscoreEncoder model
-        , expect = Http.expectJson Highscore_JSONResponse highscoreDecoder
-        }
 
