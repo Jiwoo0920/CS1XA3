@@ -9099,7 +9099,7 @@ var author$project$Main$isCollision = F4(
 var author$project$Main$GotLoginResponse = function (a) {
 	return {$: 'GotLoginResponse', a: a};
 };
-var author$project$Main$rootUrl = 'e/leej229/';
+var author$project$Main$rootUrl = 'https://mac1xa3.ca/e/leej229/';
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -9764,56 +9764,16 @@ var author$project$Main$loginPost = function (model) {
 			body: elm$http$Http$jsonBody(
 				author$project$Main$userPassEncoder(model)),
 			expect: elm$http$Http$expectString(author$project$Main$GotLoginResponse),
-			url: author$project$Main$rootUrl + 'webapp/'
+			url: author$project$Main$rootUrl + 'loginuser/'
 		});
 };
-var author$project$Main$Highscore_JSONResponse = function (a) {
-	return {$: 'Highscore_JSONResponse', a: a};
-};
-var author$project$Main$HighScore = F2(
-	function (username, highscore) {
-		return {highscore: highscore, username: username};
-	});
-var elm$json$Json$Decode$string = _Json_decodeString;
-var author$project$Main$highscoreDecoder = A3(
-	elm$json$Json$Decode$map2,
-	author$project$Main$HighScore,
-	A2(elm$json$Json$Decode$field, 'username', elm$json$Json$Decode$string),
-	A2(elm$json$Json$Decode$field, 'highscore', elm$json$Json$Decode$int));
-var elm$json$Json$Encode$int = _Json_wrap;
-var author$project$Main$highscoreEncoder = function (model) {
-	return elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'username',
-				elm$json$Json$Encode$string(model.username)),
-				_Utils_Tuple2(
-				'highscore',
-				elm$json$Json$Encode$int(model.highscore))
-			]));
-};
-var elm$json$Json$Decode$decodeString = _Json_runOnString;
-var elm$http$Http$expectJson = F2(
-	function (toMsg, decoder) {
-		return A2(
-			elm$http$Http$expectStringResponse,
-			toMsg,
-			elm$http$Http$resolve(
-				function (string) {
-					return A2(
-						elm$core$Result$mapError,
-						elm$json$Json$Decode$errorToString,
-						A2(elm$json$Json$Decode$decodeString, decoder, string));
-				}));
-	});
-var author$project$Main$sendHighscore = function (model) {
+var author$project$Main$signupPost = function (model) {
 	return elm$http$Http$post(
 		{
 			body: elm$http$Http$jsonBody(
-				author$project$Main$highscoreEncoder(model)),
-			expect: A2(elm$http$Http$expectJson, author$project$Main$Highscore_JSONResponse, author$project$Main$highscoreDecoder),
-			url: author$project$Main$rootUrl + 'webapp/'
+				author$project$Main$userPassEncoder(model)),
+			expect: elm$http$Http$expectString(author$project$Main$GotLoginResponse),
+			url: author$project$Main$rootUrl + 'signup/'
 		});
 };
 var author$project$Main$updatePos = F2(
@@ -9965,7 +9925,7 @@ var author$project$Main$update = F2(
 											player2_pos: model.player2_pos,
 											screen: author$project$Main$Game(author$project$Main$End)
 										}),
-									author$project$Main$sendHighscore(model));
+									elm$core$Platform$Cmd$none);
 							} else {
 								if (model.count < 100) {
 									return (_Utils_eq(player1_jumpState, author$project$Main$Jump) && _Utils_eq(model.jumpingPlayer, author$project$Main$None)) ? _Utils_Tuple2(player1_jumpingModel, elm$core$Platform$Cmd$none) : (_Utils_eq(model.jumpingPlayer, author$project$Main$Player1) ? ((_Utils_cmp(
@@ -10024,7 +9984,7 @@ var author$project$Main$update = F2(
 							theme: author$project$Main$changeThemeLeft(model.theme)
 						}),
 					elm$core$Platform$Cmd$none);
-			case 'LogInScreen':
+			case 'LoginPost':
 				return _Utils_Tuple2(
 					model,
 					author$project$Main$loginPost(model));
@@ -10032,21 +9992,37 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{screen: author$project$Main$SignUp}),
+						{password: '', screen: author$project$Main$SignUp, username: ''}),
 					elm$core$Platform$Cmd$none);
-			case 'SignUpScreen':
-				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+			case 'SignUpPost':
+				return _Utils_Tuple2(
+					model,
+					author$project$Main$signupPost(model));
 			case 'LogOutScreen':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{screen: author$project$Main$Login}),
+						{password: '', screen: author$project$Main$Login, username: ''}),
 					elm$core$Platform$Cmd$none);
 			case 'GoBack':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{screen: author$project$Main$Login}),
+						{password: '', screen: author$project$Main$Login, username: ''}),
+					elm$core$Platform$Cmd$none);
+			case 'Username':
+				var newUsername = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{username: newUsername}),
+					elm$core$Platform$Cmd$none);
+			case 'Password':
+				var newPassword = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{password: newPassword}),
 					elm$core$Platform$Cmd$none);
 			case 'Highscore_JSONResponse':
 				var result = msg.a;
@@ -10066,7 +10042,7 @@ var author$project$Main$update = F2(
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
-								{error: 'failed to login'}),
+								{error: 'Login Failed'}),
 							elm$core$Platform$Cmd$none);
 					} else {
 						return _Utils_Tuple2(
@@ -10587,9 +10563,15 @@ var author$project$Main$ChangeColorThemeLeft = {$: 'ChangeColorThemeLeft'};
 var author$project$Main$ChangeColorThemeRight = {$: 'ChangeColorThemeRight'};
 var author$project$Main$GoBack = {$: 'GoBack'};
 var author$project$Main$GotoSignUpScreen = {$: 'GotoSignUpScreen'};
-var author$project$Main$LogInScreen = {$: 'LogInScreen'};
 var author$project$Main$LogOutScreen = {$: 'LogOutScreen'};
-var author$project$Main$SignUpScreen = {$: 'SignUpScreen'};
+var author$project$Main$LoginPost = {$: 'LoginPost'};
+var author$project$Main$Password = function (a) {
+	return {$: 'Password', a: a};
+};
+var author$project$Main$SignUpPost = {$: 'SignUpPost'};
+var author$project$Main$Username = function (a) {
+	return {$: 'Username', a: a};
+};
 var author$project$Main$colorThemeToColor = function (colorTheme) {
 	switch (colorTheme.$) {
 		case 'Theme1':
@@ -10668,7 +10650,39 @@ var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProper
 var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
+var elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var elm$json$Json$Decode$string = _Json_decodeString;
+var elm$html$Html$Events$targetValue = A2(
+	elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	elm$json$Json$Decode$string);
+var elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			elm$json$Json$Decode$map,
+			elm$html$Html$Events$alwaysStop,
+			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
+};
 var author$project$Main$view = function (model) {
+	var usertest = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(0, -40),
+		A2(author$project$Main$textOutline, model.username + ('/' + model.password), 4));
 	var userText = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-12, -2),
@@ -10725,7 +10739,7 @@ var author$project$Main$view = function (model) {
 			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10)));
 	var signUpButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
-		author$project$Main$SignUpScreen,
+		author$project$Main$SignUpPost,
 		A2(
 			MacCASOutreach$graphicsvg$GraphicSVG$scale,
 			0.7,
@@ -10920,7 +10934,7 @@ var author$project$Main$view = function (model) {
 			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10)));
 	var loginButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
-		author$project$Main$LogInScreen,
+		author$project$Main$LoginPost,
 		A2(
 			MacCASOutreach$graphicsvg$GraphicSVG$scale,
 			0.7,
@@ -11134,7 +11148,8 @@ var author$project$Main$view = function (model) {
 										A2(elm$html$Html$Attributes$style, 'width', '25px'),
 										A2(elm$html$Html$Attributes$style, 'height', '5px'),
 										A2(elm$html$Html$Attributes$style, 'font-size', '3pt'),
-										elm$html$Html$Attributes$placeholder('Username')
+										elm$html$Html$Attributes$placeholder('Username'),
+										elm$html$Html$Events$onInput(author$project$Main$Username)
 									]),
 								_List_Nil))),
 						A2(
@@ -11152,14 +11167,16 @@ var author$project$Main$view = function (model) {
 										A2(elm$html$Html$Attributes$style, 'height', '5px'),
 										A2(elm$html$Html$Attributes$style, 'font-size', '3pt'),
 										elm$html$Html$Attributes$placeholder('Password'),
-										elm$html$Html$Attributes$type_('password')
+										elm$html$Html$Attributes$type_('password'),
+										elm$html$Html$Events$onInput(author$project$Main$Password)
 									]),
 								_List_Nil))),
 						loginTitle,
 						userBox,
 						passwordBox,
 						loginButton,
-						gotoSignUpButton
+						gotoSignUpButton,
+						usertest
 					]);
 			case 'SignUp':
 				return _List_fromArray(
@@ -11178,7 +11195,8 @@ var author$project$Main$view = function (model) {
 										A2(elm$html$Html$Attributes$style, 'width', '25px'),
 										A2(elm$html$Html$Attributes$style, 'height', '5px'),
 										A2(elm$html$Html$Attributes$style, 'font-size', '3pt'),
-										elm$html$Html$Attributes$placeholder('Username')
+										elm$html$Html$Attributes$placeholder('Username'),
+										elm$html$Html$Events$onInput(author$project$Main$Username)
 									]),
 								_List_Nil))),
 						A2(
@@ -11196,14 +11214,16 @@ var author$project$Main$view = function (model) {
 										A2(elm$html$Html$Attributes$style, 'height', '5px'),
 										A2(elm$html$Html$Attributes$style, 'font-size', '3pt'),
 										elm$html$Html$Attributes$placeholder('Password'),
-										elm$html$Html$Attributes$type_('password')
+										elm$html$Html$Attributes$type_('password'),
+										elm$html$Html$Events$onInput(author$project$Main$Password)
 									]),
 								_List_Nil))),
 						signUpTitle,
 						userBox,
 						passwordBox,
 						signUpButton,
-						goBackButton
+						goBackButton,
+						usertest
 					]);
 			default:
 				return _List_fromArray(

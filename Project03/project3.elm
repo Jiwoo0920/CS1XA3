@@ -1,3 +1,6 @@
+-- module Login exposing (main)
+-- import Browser.Navigation exposing (load)
+
 import GraphicSVG exposing (..)
 import GraphicSVG.App exposing (..)
 import Browser
@@ -9,10 +12,11 @@ import Random
 import List exposing(..)
 import Tuple exposing(..)
 import String exposing(..)
-import Json.Encode as E
+import Json.Encode as JEncode
 import Json.Decode as D
 import Html exposing (..)
 import Html.Attributes
+import Html.Events as Events
 import Http
 
 --<<Type Declaration>>
@@ -22,13 +26,15 @@ type Msg = Tick Float GetKeyState
          | DecideBigPlayer Player
          | ChangeColorThemeRight
          | ChangeColorThemeLeft
-         | LogInScreen
+         | LoginPost
          | GotoSignUpScreen
-         | SignUpScreen
+         | SignUpPost
          | GoBack
          | LogOutScreen
          | GotLoginResponse (Result Http.Error String) 
          | Highscore_JSONResponse (Result Http.Error HighScore)
+         | Username String
+         | Password String
 
 
 type Player = Player1 | Player2 | None
@@ -42,8 +48,6 @@ type Screen = Login | SignUp | Game GameStatus
 type ColorTheme = Theme1 | Theme2 | Theme3 | Theme4 | Theme5 | Theme6 | Theme7 | Theme8 
 
 type alias Model = { screen : Screen
-                   , username : String
-                   , password : String 
                    , error : String 
                    , player1_pos : (Float,Float)
                    , player2_pos : (Float, Float)
@@ -54,12 +58,15 @@ type alias Model = { screen : Screen
                    , jumpingPlayer : Player
                    , theme : ColorTheme
                    , highscore : Int 
+                   , username : String 
+                   , password : String 
                    } 
 
 --Need for server
 type alias HighScore = { username : String, highscore : Int }
 
-type alias User = { username : String , password : String }
+-- type alias User = { username : String , password : String }
+-- type alias User = (String,String)
 
 --<<Helper Functions>>-------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Function to get the jumping motion
@@ -173,8 +180,6 @@ textOutline string n = GraphicSVG.text (string) |> bold |> sansserif |> size n |
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
 init flags url key = 
     let model = { screen = Login
-                , username = ""
-                , password = ""
                 , error = ""
                 , player1_pos = (-30,-10)----function model = let (a,b)=model.player1pos in update b
                 , player2_pos = (30,-10) 
@@ -185,7 +190,9 @@ init flags url key =
                 , jumpingPlayer = None
                 , theme = Theme1
                 , highscore = 0
-                }
+                , username = ""
+                , password = ""
+                }   
     in ( model , randDecideSize) -- add init model
 
 --<<Update>>
@@ -252,7 +259,7 @@ update msg model = case msg of
                     let
                         newHighscore = if model.points > model.highscore then model.points else model.highscore 
                     in
-                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, highscore = newHighscore }, sendHighscore model )
+                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, highscore = newHighscore }, Cmd.none ) --sendHighscore model 
                 
                 --CASE 3) for 100 ticks, move players, after 100 ticks, reset to original position
                 else if model.count < 100 then
@@ -297,15 +304,20 @@ update msg model = case msg of
         ChangeColorThemeLeft -> ({model | theme = changeThemeLeft model.theme}, Cmd.none)
 
         --Login
-        LogInScreen -> (model, loginPost model) --won't need it later
+        LoginPost -> (model, loginPost model) --log in button
         
-        GotoSignUpScreen -> ({model | screen = SignUp}, Cmd.none) --you need it 
+        GotoSignUpScreen -> ({model | username = "", password = "", screen = SignUp}, Cmd.none) --you need it 
 
-        SignUpScreen -> (model,Cmd.none)
+        SignUpPost -> (model,signupPost model)
 
-        LogOutScreen -> ({model | screen = Login}, Cmd.none)
+        LogOutScreen -> ({model | username = "", password = "", screen = Login}, Cmd.none)
 
-        GoBack -> ({model | screen = Login}, Cmd.none)
+        GoBack -> ({model | username = "", password = "", screen = Login}, Cmd.none)
+
+        --Update username and password on user input
+        Username newUsername -> ({model | username = newUsername}, Cmd.none)
+
+        Password newPassword -> ({model | password = newPassword}, Cmd.none)
 
 
         --SERVER 
@@ -321,7 +333,8 @@ update msg model = case msg of
         GotLoginResponse result ->
             case result of
                 Ok "LoginFailed" ->
-                    ( { model | error = "failed to login" }, Cmd.none )
+                   ( { model | screen = Game Start}, Cmd.none)
+                  --  ( { model | error = "failed to login" }, Cmd.none )
                 Ok _ ->
                     ( { model | screen = Game Start}, Cmd.none)
                     -- ( model, load (rootUrl ++ "static/userpage.html") )
@@ -347,51 +360,83 @@ handleError model error =
 
 
 --SERVER------------------------
-rootUrl = "e/leej229/"
+rootUrl = "https://mac1xa3.ca/e/leej229/"
 
----USER AUTHENTICATION
-userPassEncoder : Model -> E.Value 
-userPassEncoder model = 
-    E.object 
-        [ ("username", E.string model.username)
-        , ("password", E.string model.password)
+-- {"username":"","password",""}
+userPassEncoder : Model -> JEncode.Value
+userPassEncoder model =
+    JEncode.object
+        [ ( "username"
+          , JEncode.string model.username
+          )
+        , ( "password"
+          , JEncode.string model.password
+          )
         ]
 
--- userPassDecoder : D.Decoder User 
--- userPassDecoder =
---     D.map2 User
---         (D.field "username" D.string)
---         (D.field "password" D.string)
+-- "{"uesrname":model.username,"password":model.password}"
+testlogin : JEncode.Value 
+testlogin = JEncode.object 
+    [("username", JEncode.string "a"),("password", JEncode.string "b")]
 
 loginPost : Model -> Cmd Msg
 loginPost model =
     Http.post
-        { url = rootUrl ++ "webapp/"
-        , body = Http.jsonBody <| userPassEncoder model
+        { url = rootUrl ++ "loginuser/"
+        , body = Http.jsonBody <| userPassEncoder model 
         , expect = Http.expectString GotLoginResponse
         }
 
---JSON HIGHSCORE
-highscoreEncoder : Model -> E.Value 
-highscoreEncoder model =
-    E.object
-        [ ("username", E.string model.username)
-        , ("highscore", E.int model.highscore)
-        ]
-
-highscoreDecoder : D.Decoder HighScore  
-highscoreDecoder = 
-    D.map2 HighScore
-        (D.field "username" D.string)
-        (D.field "highscore" D.int)
-
-sendHighscore : Model -> Cmd Msg
-sendHighscore model =
+signupPost : Model -> Cmd Msg
+signupPost model =
     Http.post
-        { url = rootUrl ++ "webapp/"
-        , body = Http.jsonBody <| highscoreEncoder model
-        , expect = Http.expectJson Highscore_JSONResponse highscoreDecoder 
+        { url = rootUrl ++ "signup/"
+        , body = Http.jsonBody <| userPassEncoder model
+        , expect = Http.expectString GotLoginResponse
         }
+-- ---USER AUTHENTICATION
+-- userPassEncoder : String -> String -> E.Value 
+-- userPassEncoder username password = 
+--     E.object 
+--         [ ("username", E.string username)
+--         , ("password", E.string password)
+--         ]
+
+-- -- userPassDecoder : D.Decoder User 
+-- -- userPassDecoder =
+-- --     D.map2 User
+-- --         (D.field "username" D.string)
+-- --         (D.field "password" D.string)
+
+-- loginPost : String -> String -> Cmd Msg
+-- loginPost username password =
+--     Http.post
+--         { url = rootUrl ++ "loginuser/"
+--         , body = Http.jsonBody <| userPassEncoder username password
+--         , expect = Http.expectString GotLoginResponse
+--         }
+
+--JSON HIGHSCORE
+-- highscoreEncoder : Model -> E.Value 
+-- highscoreEncoder model =
+--     E.object
+--         [ ("username", E.string model.username)
+--         , ("highscore", E.int model.highscore)
+--         ]
+
+-- highscoreDecoder : D.Decoder HighScore  
+-- highscoreDecoder = 
+--     D.map2 HighScore
+--         (D.field "username" D.string)
+--         (D.field "highscore" D.int)
+
+-- sendHighscore : Model -> Cmd Msg
+-- sendHighscore model =
+--     Http.post
+--         { url = rootUrl ++ "webapp/"
+--         , body = Http.jsonBody <| highscoreEncoder model
+--         , expect = Http.expectJson Highscore_JSONResponse highscoreDecoder 
+--         }
 
 
 --<<View>>
@@ -402,32 +447,35 @@ view model =
         shapes =
             case model.screen of
                 Login -> 
-                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username"] [])
+                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username][])
                         |> move (0,35)
-                    , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password"] [])
+                    , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] [])
                         |> move (0,20)
                     , loginTitle
                     , userBox 
                     , passwordBox
                     , loginButton
                     , gotoSignUpButton
+                    ,usertest
                     ]
                 SignUp -> 
-                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username"] [])
+                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username] [])
                         |> move (0,35)
-                    ,   html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password"] [])
+                    ,   html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] [])
                         |> move (0,20)
                     , signUpTitle
                     , userBox 
                     , passwordBox
                     , signUpButton
                     , goBackButton
+                    , usertest
 
                     ]
                 Game _ ->
                     [ background, caption, points, startText, gameOver, highScoreBoard, theme, floor, player1, player2, logoutButton ] 
                 
-
+        usertest = textOutline (model.username ++ "/" ++ model.password) 4
+            |> move (0,-40)
         --Screen: LOGIN
         loginTitle = textOutline "Login" 12
             |> move (-18,40)
@@ -435,7 +483,7 @@ view model =
         loginButton = group [loginShape,loginText]
             |> move (-20,-13)
             |> scale 0.7
-            |> notifyTap LogInScreen
+            |> notifyTap LoginPost
 
         loginShape = rect 30 10 
             |> filled grey 
@@ -483,7 +531,7 @@ view model =
         signUpButton = group [signUpShape,signUpText]
             |> move (15,-13)
             |> scale 0.7
-            |> notifyTap SignUpScreen
+            |> notifyTap SignUpPost
 
         signUpShape = rect 30 10 
             |> filled grey 
@@ -689,5 +737,6 @@ main = appWithTick Tick
        , onUrlRequest = MakeRequest
        , onUrlChange = UrlChange
        } 
+
 
 

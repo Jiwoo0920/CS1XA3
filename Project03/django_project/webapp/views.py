@@ -5,32 +5,23 @@ from django.contrib.auth import authenticate, login, logout
 import json
 from . models import UserInfo
 
-# Create your views here.
-#def session_incr(request):
-#	i = request.session.get('counter',0)
-#	request.session['counter'] = i+1
-#	return HttpResponse("Counter = " + str(request.session['counter']))
 
-#def session_get(request):
-#	return HttpResponse("Counter = " + str(request.session['counter']))
+#def get_highscore(request):
+#	json_req = json.loads(request.body) #takes the request and turn to dictionary 
+#	username = json_req.get('username','')
+#	highscore = json_req.get('highscore',0)
+#	user = User.objects.get(username=username)
+#	userinfo = UserInfo.objects.get(user=user)
+#	if highscore > userinfo.highscore:
+#		userinfo.highscore = highscore
+#	userinfo.save()
 
-
-def get_highscore(request):
-	json_req = json.loads(request.body) #takes the request and turn to dictionary 
-	username = json_req.get('username','')
-	highscore = json_req.get('highscore',0)	
-	user = User.objects.get(username=username)
-	userinfo = UserInfo.objects.get(user=user)
-	if highscore > userinfo.highscore:
-		userinfo.highscore = highscore
-	userinfo.save()
-
-def view_highscore(request):
-	reqDict = json.loads(request.body)
-	username = reqDict.get('username','')
-	user = User.objects.get(username=username)
-	userinfo = UserInfo.objects.get(user=user)
-	userhighscore = userinfo.highscore
+#def view_highscore(request):
+#	reqDict = json.loads(request.body)
+#	username = reqDict.get('username','')
+#	user = User.objects.get(username=username)
+#	userinfo = UserInfo.objects.get(user=user)
+#	userhighscore = userinfo.highscore
 #	return JsonResponse({'highscore':userhighscore})
 
 def sign_up(request):
@@ -45,8 +36,8 @@ def sign_up(request):
 		return HttpResponse('SignupFail')
 
 def login_user(request):
-	print("Printing body " + str(request.body))
-	json_req = json.loads(request.body)
+	json_req = json.loads(request.body.decode('utf-8'))
+	print("print:" + str(json_req))
 	uname = json_req.get('username','')
 	passw = json_req.get('password','')
 	user = authenticate(request,username=uname,password=passw)

@@ -19,5 +19,12 @@ from django.urls import path, include
 root = "e/leej229/"
 
 urlpatterns = [
+#    path('admin/', admin.site.urls),   do i need this?
     path(root, include("webapp.urls")),
 ]
+
+#if we dont type anything for our path we'll automatically redirect
+# to webapp.urls. Inside webapp.urls it'll look for specific paths (ex.login,
+#signup, etc...)
+
+
