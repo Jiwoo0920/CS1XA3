@@ -1,4 +1,4 @@
-#from django.shortcuts import render
+from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -6,15 +6,18 @@ import json
 from . models import UserInfo
 
 
-#def get_highscore(request):
-#	json_req = json.loads(request.body) #takes the request and turn to dictionary 
-#	username = json_req.get('username','')
-#	highscore = json_req.get('highscore',0)
-#	user = User.objects.get(username=username)
-#	userinfo = UserInfo.objects.get(user=user)
-#	if highscore > userinfo.highscore:
-#		userinfo.highscore = highscore
-#	userinfo.save()
+def get_highscore(request):
+	json_req = json.loads(request.body) #takes the request and turn to dictionary 
+	username = json_req.get('username','')
+	highscore = json_req.get('highscore',0)
+	user = User.objects.get(username=username)
+	userinfo = UserInfo.objects.get(user=user)
+	if highscore > userinfo.highscore:
+		userinfo.highscore = highscore
+		userinfo.save()
+		return HttpResponse('UpdatedNewHighscore')
+	else:
+		return HttpResponse('NotAHighscore')
 
 #def view_highscore(request):
 #	reqDict = json.loads(request.body)
