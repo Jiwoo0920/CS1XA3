@@ -35,7 +35,7 @@ type Msg = Tick Float GetKeyState
          | GotHighscoreResponse (Result Http.Error String) 
          | Username String
          | Password String
-         | GetUserHighScore (Result Http.Error Model)
+         | GetUserHighScore (Result Http.Error UserInfo)
 
 
 type Player = Player1 | Player2 | None
@@ -58,15 +58,17 @@ type alias Model = { screen : Screen
                    , points : Int 
                    , jumpingPlayer : Player
                    , theme : ColorTheme
-                   , userinfo : UserInfoField
+                   , credentials : Credentials
+                   , userinfo : UserInfo
                    } 
 
 --Need for server
-type alias UserInfoField = { username : String
-                  , password : String
-                  , highscore : Int 
-                  }
+type alias Credentials = { username : String
+                         , password : String
+                         }
 
+type alias UserInfo = { username : String
+                           , highscore : Int}
 
 --<<Helper Functions>>-------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Function to get the jumping motion
@@ -189,7 +191,8 @@ init flags url key =
                 , points = 0
                 , jumpingPlayer = None
                 , theme = Theme1
-                , userinfo = {username = "", password = "", highscore = 0}
+                , credentials = {username = "", password = ""}
+                , userinfo= {username = "", highscore = 0}
                 }   
     in ( model , randDecideSize) -- add init model
 
@@ -258,7 +261,7 @@ update msg model = case msg of
                         newHighscore = if model.points > model.userinfo.highscore then model.points else model.userinfo.highscore 
                         message = if model.points > model.userinfo.highscore then highscorePost model.userinfo.username model.points else Cmd.none
                         oldUserInfo = model.userinfo
-                        newUserInfo = { oldUserInfo | highscore = newHighscore}
+                        newUserInfo= { oldUserInfo | highscore = newHighscore}
                     in
                         ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo}, message) --sendHighscore model 
                 
@@ -309,42 +312,42 @@ update msg model = case msg of
         
         GotoSignUpScreen -> 
             let
-                oldUserInfo = model.userinfo
-                newUserInfo = { oldUserInfo | username = "", password = ""}
+                oldCredentials= model.credentials
+                newCredentials = { oldCredentials | username = "", password = ""}
             in
-                ({model | userinfo = newUserInfo, screen = SignUp}, Cmd.none)
+                ({model | credentials = newCredentials, screen = SignUp}, Cmd.none)
 
         SignUpPost -> (model,signupPost model)
 
         LogOutScreen -> 
             let
-                oldUserInfo = model.userinfo
-                newUserInfo = { oldUserInfo | username = "", password = ""}
+                oldCredentials= model.credentials
+                newCredentials= { oldCredentials | username = "", password = ""}
             in
-                ({model | userinfo = newUserInfo, screen = Login}, Cmd.none) --TODO: update logout post!!
+                ({model | credentials = newCredentials, screen = Login}, Cmd.none) --TODO: update logout post!!
         
         GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
             let
-                oldUserInfo = model.userinfo
-                newUserInfo = { oldUserInfo | username = "", password = ""}
+                oldCredentials= model.credentials
+                newCredentials= { oldCredentials | username = "", password = ""}
             in
-                ({model | userinfo = newUserInfo, screen = Login}, Cmd.none)
-
+                ({model | credentials = newCredentials, screen = Login}, Cmd.none) 
         --Update username and password on user input
         Username newUsername -> 
             let
-                oldUserInfo = model.userinfo
-                newUserInfo = { oldUserInfo | username = newUsername}
+                oldCredentials = model.credentials
+                newCredentials = { oldCredentials | username = newUsername}
+                oldUserInfo = model.userinfo 
+                newUserInfo = {oldUserInfo | username = newUsername}
             in
-                ({model | userinfo = newUserInfo}, Cmd.none)
+                ({model | credentials = newCredentials, userinfo = newUserInfo}, Cmd.none)
 
         Password newPassword ->
             let
-                oldUserInfo = model.userinfo
-                newUserInfo = { oldUserInfo | password = newPassword}
+                oldCredentials = model.credentials
+                newCredentials = { oldCredentials | password = newPassword}
             in
-                ({model | userinfo = newUserInfo}, Cmd.none)
-
+                ({model | credentials = newCredentials}, Cmd.none)
 
         --SERVER 
         --Highscore
@@ -355,13 +358,17 @@ update msg model = case msg of
                 Err error ->
                     ( handleError model error, Cmd.none )
 
-        GetUserHighScore result ->
-            case result of
-                Ok newModel ->
-                    ( newModel, Cmd.none )
+        GetUserHighScore result -> (model, Cmd.none)
+            -- case result of
+            --     Ok newModel ->
+            --             let
+            --                 oldUserInfo = model.userinfo
+            --                 newUserInfo = { oldUserInfo | highscore }
+            --             in
+            --         ( newModel, Cmd.none )
 
-                Err error ->
-                    ( handleError model error, Cmd.none )
+            --     Err error ->
+            --         ( handleError model error, Cmd.none )
 
 
         --User Authentication 
@@ -399,8 +406,8 @@ rootUrl = "https://mac1xa3.ca/e/leej229/"
 userPassEncoder : Model -> JEncode.Value
 userPassEncoder model =
     JEncode.object
-        [ ( "username", JEncode.string model.userinfo.username)
-        , ( "password", JEncode.string model.userinfo.password)
+        [ ( "username", JEncode.string model.credentials.username)
+        , ( "password", JEncode.string model.credentials.password)
         ]
 
 loginPost : Model -> Cmd Msg
@@ -441,29 +448,19 @@ highscorePost username highscore =
         , expect = Http.expectString GotHighscoreResponse  
         }
 
--- highscoreDecoder :JDecode.Decoder Model  
--- highscoreDecoder = 
---     JDecode.map2 GetUserHighScore
---         (JDecode.field "username" JDecode.string)
---         (JDecode.field "highscore" JDecode.int)
+highscoreDecoder : JDecode.Decoder UserInfo  
+highscoreDecoder = 
+    JDecode.map2 UserInfo
+        (JDecode.field "username" JDecode.string)
+        (JDecode.field "highscore" JDecode.int)
 
--- highscoreDecoder : JDecode.Decoder User  
--- highscoreDecoder = 
---     JDecode.map3 User
---         (JDecode.field "username" JDecode.string)
---         (JDecode.field "password" JDecode.string)
---         (JDecode.field "highscore" JDecode.int)
-
--- -- highscoreDecoder : Decoder Int 
--- -- highscoreDecoder = field "highscore" int 
-
--- getUserHighscore : Model -> Cmd Msg 
--- getUserHighscore model =  
---     Http.post 
---         { url = rootUrl ++ "viewhighscore/"
---         , body = Http.jsonBody <| userPassEncoder model 
---         , expect = Http.expectJson GetUserHighScore highscoreDecoder
---         }
+getUserHighscore : Model -> Cmd Msg 
+getUserHighscore model =  
+    Http.post 
+        { url = rootUrl ++ "viewhighscore/"
+        , body = Http.jsonBody <| userPassEncoder model
+        , expect = Http.expectJson GetUserHighScore highscoreDecoder
+        }
 
 
 
@@ -502,7 +499,7 @@ view model =
                 Game _ ->
                     [ background, caption, points, startText, gameOver, highScoreBoard, theme, floor, player1, player2, logoutButton ] 
                 
-        usertest = textOutline (model.userinfo.username ++ "/" ++ model.userinfo.password) 4
+        usertest = textOutline (model.userinfo.username ++ "/" ++ model.credentials.password) 4
             |> move (0,-40)
         --Screen: LOGIN
         loginTitle = textOutline "Login" 12

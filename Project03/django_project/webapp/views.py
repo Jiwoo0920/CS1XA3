@@ -26,7 +26,10 @@ def view_highscore(request):
 	user = User.objects.get(username=username)
 	userinfo = UserInfo.objects.get(user=user)
 	userhighscore = userinfo.highscore
-	return JsonResponse({'highscore':userhighscore})
+	respDict = {}
+	respDict['username'] = user.username
+	respDict['highscore'] = userhighscore
+	return JsonResponse(respDict)
 
 
 def sign_up(request):
