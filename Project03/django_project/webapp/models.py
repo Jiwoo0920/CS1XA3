@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 class UserInfoManager(models.Manager):
 	def create_user_info(self, username, password, highscore):
 		user = User.objects.create_user(username=username, password=password)
-		userinfo = UserInfo.objects.create(user=user, highscore=highscore)
-#        userinfo = self.create(user=user,highscore=highscore)
+#		userinfo = UserInfo.objects.create(user=user, highscore=highscore)
+		userinfo = self.create(user=user,highscore=highscore)
 		return userinfo
 
 class UserInfo(models.Model):

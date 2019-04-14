@@ -31,8 +31,11 @@ def sign_up(request):
 	json_req = json.loads(request.body)
 	uname = json_req.get('username','')
 	passw = json_req.get('password','')
-	if uname != '':
+	if uname != '' and passw != '':
 		user = User.objects.create_user(username=uname, password=passw)
+		userinfo = UserInfo.objects.create(user=user,highscore=0)
+		user.save()
+		userinfo.save()
 		login(request,user)
 		return HttpResponse('SignupSuccess')
 	else:
