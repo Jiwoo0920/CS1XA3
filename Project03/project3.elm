@@ -13,7 +13,7 @@ import List exposing(..)
 import Tuple exposing(..)
 import String exposing(..)
 import Json.Encode as JEncode
-import Json.Decode as D
+import Json.Decode as JDecode
 import Html exposing (..)
 import Html.Attributes
 import Html.Events as Events
@@ -32,9 +32,10 @@ type Msg = Tick Float GetKeyState
          | GoBack
          | LogOutScreen
          | GotLoginResponse (Result Http.Error String) 
-         | Highscore_JSONResponse (Result Http.Error HighScore)
+         | GotHighscoreResponse (Result Http.Error String) 
          | Username String
          | Password String
+         | GetUserHighScore (Result Http.Error Model)
 
 
 type Player = Player1 | Player2 | None
@@ -57,16 +58,15 @@ type alias Model = { screen : Screen
                    , points : Int 
                    , jumpingPlayer : Player
                    , theme : ColorTheme
-                   , highscore : Int 
-                   , username : String 
-                   , password : String 
+                   , userinfo : UserInfoField
                    } 
 
 --Need for server
-type alias HighScore = { username : String, highscore : Int }
+type alias UserInfoField = { username : String
+                  , password : String
+                  , highscore : Int 
+                  }
 
--- type alias User = { username : String , password : String }
--- type alias User = (String,String)
 
 --<<Helper Functions>>-------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Function to get the jumping motion
@@ -106,13 +106,13 @@ playerMatch a b =
     else False 
 
 --Final collision function
-isCollision : Player -> Player -> (Float,Float) -> (Float,Float) -> Bool 
-isCollision bigPlayer jumpingPlayer  player1_pos player2_pos = 
-    if playerMatch bigPlayer jumpingPlayer then
-        isCollisionBigOnSmall player1_pos player2_pos 
-    else if playerMatch bigPlayer jumpingPlayer == False then 
-        isCollisionSmallOnBig player1_pos player2_pos 
-    else isCollisionNoJump player1_pos player2_pos 
+isCollision : Model -> Bool 
+isCollision model = 
+    if playerMatch model.bigPlayer model.jumpingPlayer then
+        isCollisionBigOnSmall model.player1_pos model.player2_pos 
+    else if playerMatch model.bigPlayer model.jumpingPlayer == False then 
+        isCollisionSmallOnBig model.player1_pos model.player2_pos 
+    else isCollisionNoJump model.player1_pos model.player2_pos 
 
 --Function to decide which player is bigger
 randomizeSize : Random.Generator Player
@@ -189,9 +189,7 @@ init flags url key =
                 , points = 0
                 , jumpingPlayer = None
                 , theme = Theme1
-                , highscore = 0
-                , username = ""
-                , password = ""
+                , userinfo = {username = "", password = "", highscore = 0}
                 }   
     in ( model , randDecideSize) -- add init model
 
@@ -255,11 +253,14 @@ update msg model = case msg of
                 else if model.screen == Game Start  && restart == False then (model,Cmd.none)
                 else if restart && (model.screen == Game End || model.screen == Game Start) then (restartModel, randDecideSize)
                 --CASE 2)if there's a collision, end game 
-                else if isCollision model.bigPlayer model.jumpingPlayer model.player1_pos model.player2_pos then 
+                else if isCollision model then 
                     let
-                        newHighscore = if model.points > model.highscore then model.points else model.highscore 
+                        newHighscore = if model.points > model.userinfo.highscore then model.points else model.userinfo.highscore 
+                        message = if model.points > model.userinfo.highscore then highscorePost model.userinfo.username model.points else Cmd.none
+                        oldUserInfo = model.userinfo
+                        newUserInfo = { oldUserInfo | highscore = newHighscore}
                     in
-                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, highscore = newHighscore }, Cmd.none ) --sendHighscore model 
+                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo}, message) --sendHighscore model 
                 
                 --CASE 3) for 100 ticks, move players, after 100 ticks, reset to original position
                 else if model.count < 100 then
@@ -306,38 +307,70 @@ update msg model = case msg of
         --Login
         LoginPost -> (model, loginPost model) --log in button
         
-        GotoSignUpScreen -> ({model | username = "", password = "", screen = SignUp}, Cmd.none) --you need it 
+        GotoSignUpScreen -> 
+            let
+                oldUserInfo = model.userinfo
+                newUserInfo = { oldUserInfo | username = "", password = ""}
+            in
+                ({model | userinfo = newUserInfo, screen = SignUp}, Cmd.none)
 
         SignUpPost -> (model,signupPost model)
 
-        LogOutScreen -> ({model | username = "", password = "", screen = Login}, Cmd.none)
-
-        GoBack -> ({model | username = "", password = "", screen = Login}, Cmd.none)
+        LogOutScreen -> 
+            let
+                oldUserInfo = model.userinfo
+                newUserInfo = { oldUserInfo | username = "", password = ""}
+            in
+                ({model | userinfo = newUserInfo, screen = Login}, Cmd.none) --TODO: update logout post!!
+        
+        GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
+            let
+                oldUserInfo = model.userinfo
+                newUserInfo = { oldUserInfo | username = "", password = ""}
+            in
+                ({model | userinfo = newUserInfo, screen = Login}, Cmd.none)
 
         --Update username and password on user input
-        Username newUsername -> ({model | username = newUsername}, Cmd.none)
+        Username newUsername -> 
+            let
+                oldUserInfo = model.userinfo
+                newUserInfo = { oldUserInfo | username = newUsername}
+            in
+                ({model | userinfo = newUserInfo}, Cmd.none)
 
-        Password newPassword -> ({model | password = newPassword}, Cmd.none)
+        Password newPassword ->
+            let
+                oldUserInfo = model.userinfo
+                newUserInfo = { oldUserInfo | password = newPassword}
+            in
+                ({model | userinfo = newUserInfo}, Cmd.none)
 
 
         --SERVER 
         --Highscore
-        Highscore_JSONResponse result ->
+        GotHighscoreResponse result ->
             case result of
-                Ok newHighcore ->
-                    ( model, Cmd.none ) --edit model
+                Ok _ -> 
+                    (model, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none )
+
+        GetUserHighScore result ->
+            case result of
+                Ok newModel ->
+                    ( newModel, Cmd.none )
+
+                Err error ->
+                    ( handleError model error, Cmd.none )
+
 
         --User Authentication 
         GotLoginResponse result ->
             case result of
                 Ok "LoginFailed" ->
-                   ( { model | screen = Game Start}, Cmd.none)
-                  --  ( { model | error = "failed to login" }, Cmd.none )
+                   ( { model | error = "Login Failed"}, Cmd.none)
                 Ok _ ->
                     ( { model | screen = Game Start}, Cmd.none)
-                    -- ( model, load (rootUrl ++ "static/userpage.html") )
                 Err error ->
                     ( handleError model error, Cmd.none )
 
@@ -366,18 +399,9 @@ rootUrl = "https://mac1xa3.ca/e/leej229/"
 userPassEncoder : Model -> JEncode.Value
 userPassEncoder model =
     JEncode.object
-        [ ( "username"
-          , JEncode.string model.username
-          )
-        , ( "password"
-          , JEncode.string model.password
-          )
+        [ ( "username", JEncode.string model.userinfo.username)
+        , ( "password", JEncode.string model.userinfo.password)
         ]
-
--- "{"uesrname":model.username,"password":model.password}"
-testlogin : JEncode.Value 
-testlogin = JEncode.object 
-    [("username", JEncode.string "a"),("password", JEncode.string "b")]
 
 loginPost : Model -> Cmd Msg
 loginPost model =
@@ -394,13 +418,6 @@ signupPost model =
         , body = Http.jsonBody <| userPassEncoder model
         , expect = Http.expectString GotLoginResponse
         }
--- ---USER AUTHENTICATION
--- userPassEncoder : String -> String -> E.Value 
--- userPassEncoder username password = 
---     E.object 
---         [ ("username", E.string username)
---         , ("password", E.string password)
---         ]
 
 -- -- userPassDecoder : D.Decoder User 
 -- -- userPassDecoder =
@@ -408,35 +425,46 @@ signupPost model =
 -- --         (D.field "username" D.string)
 -- --         (D.field "password" D.string)
 
--- loginPost : String -> String -> Cmd Msg
--- loginPost username password =
---     Http.post
---         { url = rootUrl ++ "loginuser/"
---         , body = Http.jsonBody <| userPassEncoder username password
---         , expect = Http.expectString GotLoginResponse
---         }
-
 --JSON HIGHSCORE
--- highscoreEncoder : Model -> E.Value 
--- highscoreEncoder model =
---     E.object
---         [ ("username", E.string model.username)
---         , ("highscore", E.int model.highscore)
---         ]
+highscoreEncoder : String -> Int -> JEncode.Value 
+highscoreEncoder username highscore =
+    JEncode.object
+        [ ("username", JEncode.string username)
+        , ("highscore", JEncode.int highscore)
+        ]
 
--- highscoreDecoder : D.Decoder HighScore  
+highscorePost : String -> Int -> Cmd Msg
+highscorePost username highscore =
+    Http.post
+        { url = rootUrl ++ "gethighscore/"
+        , body = Http.jsonBody <| highscoreEncoder username highscore
+        , expect = Http.expectString GotHighscoreResponse  
+        }
+
+-- highscoreDecoder :JDecode.Decoder Model  
 -- highscoreDecoder = 
---     D.map2 HighScore
---         (D.field "username" D.string)
---         (D.field "highscore" D.int)
+--     JDecode.map2 GetUserHighScore
+--         (JDecode.field "username" JDecode.string)
+--         (JDecode.field "highscore" JDecode.int)
 
--- sendHighscore : Model -> Cmd Msg
--- sendHighscore model =
---     Http.post
---         { url = rootUrl ++ "webapp/"
---         , body = Http.jsonBody <| highscoreEncoder model
---         , expect = Http.expectJson Highscore_JSONResponse highscoreDecoder 
+-- highscoreDecoder : JDecode.Decoder User  
+-- highscoreDecoder = 
+--     JDecode.map3 User
+--         (JDecode.field "username" JDecode.string)
+--         (JDecode.field "password" JDecode.string)
+--         (JDecode.field "highscore" JDecode.int)
+
+-- -- highscoreDecoder : Decoder Int 
+-- -- highscoreDecoder = field "highscore" int 
+
+-- getUserHighscore : Model -> Cmd Msg 
+-- getUserHighscore model =  
+--     Http.post 
+--         { url = rootUrl ++ "viewhighscore/"
+--         , body = Http.jsonBody <| userPassEncoder model 
+--         , expect = Http.expectJson GetUserHighScore highscoreDecoder
 --         }
+
 
 
 --<<View>>
@@ -474,7 +502,7 @@ view model =
                 Game _ ->
                     [ background, caption, points, startText, gameOver, highScoreBoard, theme, floor, player1, player2, logoutButton ] 
                 
-        usertest = textOutline (model.username ++ "/" ++ model.password) 4
+        usertest = textOutline (model.userinfo.username ++ "/" ++ model.userinfo.password) 4
             |> move (0,-40)
         --Screen: LOGIN
         loginTitle = textOutline "Login" 12
@@ -617,7 +645,7 @@ view model =
         user = textOutline ("User: ") 3
             |> move (-50,-45)
 
-        highscorePoints = textOutline ("Your highscore is: " ++ String.fromInt model.highscore ) 3
+        highscorePoints = textOutline ("Your highscore is: " ++ String.fromInt model.userinfo.highscore ) 3
             |> move (-50,-50)
 
         background = square 100

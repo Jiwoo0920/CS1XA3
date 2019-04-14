@@ -8933,16 +8933,14 @@ var author$project$Main$init = F3(
 			bigPlayer: author$project$Main$Player2,
 			count: 0,
 			error: '',
-			highscore: 0,
 			jumpX: 1.5,
 			jumpingPlayer: author$project$Main$None,
-			password: '',
 			player1_pos: _Utils_Tuple2(-30, -10),
 			player2_pos: _Utils_Tuple2(30, -10),
 			points: 0,
 			screen: author$project$Main$Login,
 			theme: author$project$Main$Theme1,
-			username: ''
+			userinfo: {highscore: 0, password: '', username: ''}
 		};
 		return _Utils_Tuple2(model, author$project$Main$randDecideSize);
 	});
@@ -9778,10 +9776,10 @@ var author$project$Main$userPassEncoder = function (model) {
 			[
 				_Utils_Tuple2(
 				'username',
-				elm$json$Json$Encode$string(model.username)),
+				elm$json$Json$Encode$string(model.userinfo.username)),
 				_Utils_Tuple2(
 				'password',
-				elm$json$Json$Encode$string(model.password))
+				elm$json$Json$Encode$string(model.userinfo.password))
 			]));
 };
 var author$project$Main$loginPost = function (model) {
@@ -9941,16 +9939,20 @@ var author$project$Main$update = F2(
 							return _Utils_Tuple2(restartModel, author$project$Main$randDecideSize);
 						} else {
 							if (author$project$Main$isCollision(model)) {
-								var newHighscore = (_Utils_cmp(model.points, model.highscore) > 0) ? model.points : model.highscore;
-								var message = (_Utils_cmp(model.points, model.highscore) > 0) ? A2(author$project$Main$highscorePost, model.username, model.points) : elm$core$Platform$Cmd$none;
+								var oldUserInfo = model.userinfo;
+								var newHighscore = (_Utils_cmp(model.points, model.userinfo.highscore) > 0) ? model.points : model.userinfo.highscore;
+								var newUserInfo = _Utils_update(
+									oldUserInfo,
+									{highscore: newHighscore});
+								var message = (_Utils_cmp(model.points, model.userinfo.highscore) > 0) ? A2(author$project$Main$highscorePost, model.userinfo.username, model.points) : elm$core$Platform$Cmd$none;
 								return _Utils_Tuple2(
 									_Utils_update(
 										model,
 										{
-											highscore: newHighscore,
 											player1_pos: model.player1_pos,
 											player2_pos: model.player2_pos,
-											screen: author$project$Main$Game(author$project$Main$End)
+											screen: author$project$Main$Game(author$project$Main$End),
+											userinfo: newUserInfo
 										}),
 									message);
 							} else {
@@ -10016,40 +10018,60 @@ var author$project$Main$update = F2(
 					model,
 					author$project$Main$loginPost(model));
 			case 'GotoSignUpScreen':
+				var oldUserInfo = model.userinfo;
+				var newUserInfo = _Utils_update(
+					oldUserInfo,
+					{password: '', username: ''});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{password: '', screen: author$project$Main$SignUp, username: ''}),
+						{screen: author$project$Main$SignUp, userinfo: newUserInfo}),
 					elm$core$Platform$Cmd$none);
 			case 'SignUpPost':
 				return _Utils_Tuple2(
 					model,
 					author$project$Main$signupPost(model));
 			case 'LogOutScreen':
+				var oldUserInfo = model.userinfo;
+				var newUserInfo = _Utils_update(
+					oldUserInfo,
+					{password: '', username: ''});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{password: '', screen: author$project$Main$Login, username: ''}),
+						{screen: author$project$Main$Login, userinfo: newUserInfo}),
 					elm$core$Platform$Cmd$none);
 			case 'GoBack':
+				var oldUserInfo = model.userinfo;
+				var newUserInfo = _Utils_update(
+					oldUserInfo,
+					{password: '', username: ''});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{password: '', screen: author$project$Main$Login, username: ''}),
+						{screen: author$project$Main$Login, userinfo: newUserInfo}),
 					elm$core$Platform$Cmd$none);
 			case 'Username':
 				var newUsername = msg.a;
+				var oldUserInfo = model.userinfo;
+				var newUserInfo = _Utils_update(
+					oldUserInfo,
+					{username: newUsername});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{username: newUsername}),
+						{userinfo: newUserInfo}),
 					elm$core$Platform$Cmd$none);
 			case 'Password':
 				var newPassword = msg.a;
+				var oldUserInfo = model.userinfo;
+				var newUserInfo = _Utils_update(
+					oldUserInfo,
+					{password: newPassword});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{password: newPassword}),
+						{userinfo: newUserInfo}),
 					elm$core$Platform$Cmd$none);
 			case 'GotHighscoreResponse':
 				var result = msg.a;
@@ -10719,7 +10741,7 @@ var author$project$Main$view = function (model) {
 	var usertest = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(0, -40),
-		A2(author$project$Main$textOutline, model.username + ('/' + model.password), 4));
+		A2(author$project$Main$textOutline, model.userinfo.username + ('/' + model.userinfo.password), 4));
 	var userText = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-12, -2),
@@ -11052,7 +11074,7 @@ var author$project$Main$view = function (model) {
 		_Utils_Tuple2(-50, -50),
 		A2(
 			author$project$Main$textOutline,
-			'Your highscore is: ' + elm$core$String$fromInt(model.highscore),
+			'Your highscore is: ' + elm$core$String$fromInt(model.userinfo.highscore),
 			3));
 	var highScore = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
