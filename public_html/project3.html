@@ -9067,18 +9067,19 @@ var elm$json$Json$Encode$object = function (pairs) {
 			pairs));
 };
 var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$highscoreEncoder = function (model) {
-	return elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'username',
-				elm$json$Json$Encode$string(model.username)),
-				_Utils_Tuple2(
-				'highscore',
-				elm$json$Json$Encode$int(model.highscore))
-			]));
-};
+var author$project$Main$highscoreEncoder = F2(
+	function (username, highscore) {
+		return elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'username',
+					elm$json$Json$Encode$string(username)),
+					_Utils_Tuple2(
+					'highscore',
+					elm$json$Json$Encode$int(highscore))
+				]));
+	});
 var author$project$Main$rootUrl = 'https://mac1xa3.ca/e/leej229/';
 var elm$core$Basics$composeR = F3(
 	function (f, g, x) {
@@ -9712,15 +9713,16 @@ var elm$http$Http$post = function (r) {
 	return elm$http$Http$request(
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
-var author$project$Main$highscorePost = function (model) {
-	return elm$http$Http$post(
-		{
-			body: elm$http$Http$jsonBody(
-				author$project$Main$highscoreEncoder(model)),
-			expect: elm$http$Http$expectString(author$project$Main$GotHighscoreResponse),
-			url: author$project$Main$rootUrl + 'gethighscore/'
-		});
-};
+var author$project$Main$highscorePost = F2(
+	function (username, highscore) {
+		return elm$http$Http$post(
+			{
+				body: elm$http$Http$jsonBody(
+					A2(author$project$Main$highscoreEncoder, username, highscore)),
+				expect: elm$http$Http$expectString(author$project$Main$GotHighscoreResponse),
+				url: author$project$Main$rootUrl + 'gethighscore/'
+			});
+	});
 var elm$core$Basics$abs = function (n) {
 	return (n < 0) ? (-n) : n;
 };
@@ -9940,7 +9942,7 @@ var author$project$Main$update = F2(
 						} else {
 							if (author$project$Main$isCollision(model)) {
 								var newHighscore = (_Utils_cmp(model.points, model.highscore) > 0) ? model.points : model.highscore;
-								var message = (_Utils_cmp(model.points, model.highscore) > 0) ? author$project$Main$highscorePost(model) : elm$core$Platform$Cmd$none;
+								var message = (_Utils_cmp(model.points, model.highscore) > 0) ? A2(author$project$Main$highscorePost, model.username, model.points) : elm$core$Platform$Cmd$none;
 								return _Utils_Tuple2(
 									_Utils_update(
 										model,
@@ -10052,15 +10054,18 @@ var author$project$Main$update = F2(
 			case 'GotHighscoreResponse':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
-					if (result.a === 'UpdatedNewHighscore') {
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{screen: author$project$Main$Login}),
-							elm$core$Platform$Cmd$none);
-					} else {
-						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-					}
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				} else {
+					var error = result.a;
+					return _Utils_Tuple2(
+						A2(author$project$Main$handleError, model, error),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'GetUserHighScore':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var newModel = result.a;
+					return _Utils_Tuple2(newModel, elm$core$Platform$Cmd$none);
 				} else {
 					var error = result.a;
 					return _Utils_Tuple2(

@@ -9,10 +9,13 @@ from . models import UserInfo
 def get_highscore(request):
 	json_req = json.loads(request.body) #takes the request and turn to dictionary 
 	username = json_req.get('username','')
-	highscore = json_req.get('highscore','')
+	highscore = json_req.get('highscore',0)
+	print("username:"+str(username)+"/"+"highscore:"+str(highscore))
 	user = User.objects.get(username=username)
 	userinfo = UserInfo.objects.get(user=user)
 	if highscore > userinfo.highscore:
+#		user.userinfo.highscore = highscore
+#		user.save()
 		userinfo.highscore = highscore
 		userinfo.save()
 		return HttpResponse('UpdatedNewHighscore')
