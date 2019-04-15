@@ -35,7 +35,7 @@ type Msg = Tick Float GetKeyState
          | GotHighscoreResponse (Result Http.Error String) 
          | Username String
          | Password String
-         | GetUserHighScore (Result Http.Error UserInfo)
+         | GetUserInfo (Result Http.Error UserInfo)
 
 
 type Player = Player1 | Player2 | None
@@ -323,8 +323,10 @@ update msg model = case msg of
             let
                 oldCredentials= model.credentials
                 newCredentials= { oldCredentials | username = "", password = ""}
+                oldUserInfo = model.userinfo 
+                newUserInfo = { oldUserInfo | username = "", highscore = 0}
             in
-                ({model | credentials = newCredentials, screen = Login}, Cmd.none) --TODO: update logout post!!
+                ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login}, Cmd.none) --TODO: update logout post!!
         
         GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
             let
@@ -358,17 +360,16 @@ update msg model = case msg of
                 Err error ->
                     ( handleError model error, Cmd.none )
 
-        GetUserHighScore result -> (model, Cmd.none)
-            -- case result of
-            --     Ok newModel ->
-            --             let
-            --                 oldUserInfo = model.userinfo
-            --                 newUserInfo = { oldUserInfo | highscore }
-            --             in
-            --         ( newModel, Cmd.none )
+        GetUserInfo result -> 
+            case result of
+                Ok newModel ->
+                        let
+                            newUserInfo = newModel
+                        in
+                            ( { model | userinfo = newModel}, Cmd.none )
 
-            --     Err error ->
-            --         ( handleError model error, Cmd.none )
+                Err error ->
+                    ( handleError model error, Cmd.none )
 
 
         --User Authentication 
@@ -377,7 +378,7 @@ update msg model = case msg of
                 Ok "LoginFailed" ->
                    ( { model | error = "Login Failed"}, Cmd.none)
                 Ok _ ->
-                    ( { model | screen = Game Start}, Cmd.none)
+                    ( { model | screen = Game Start}, getUserInfo model )
                 Err error ->
                     ( handleError model error, Cmd.none )
 
@@ -454,12 +455,12 @@ highscoreDecoder =
         (JDecode.field "username" JDecode.string)
         (JDecode.field "highscore" JDecode.int)
 
-getUserHighscore : Model -> Cmd Msg 
-getUserHighscore model =  
+getUserInfo : Model -> Cmd Msg 
+getUserInfo model =  
     Http.post 
         { url = rootUrl ++ "viewhighscore/"
         , body = Http.jsonBody <| userPassEncoder model
-        , expect = Http.expectJson GetUserHighScore highscoreDecoder
+        , expect = Http.expectJson GetUserInfo highscoreDecoder
         }
 
 
@@ -499,7 +500,7 @@ view model =
                 Game _ ->
                     [ background, caption, points, startText, gameOver, highScoreBoard, theme, floor, player1, player2, logoutButton ] 
                 
-        usertest = textOutline (model.userinfo.username ++ "/" ++ model.credentials.password) 4
+        usertest = textOutline (model.credentials.username ++ "/" ++ model.credentials.password) 4
             |> move (0,-40)
         --Screen: LOGIN
         loginTitle = textOutline "Login" 12

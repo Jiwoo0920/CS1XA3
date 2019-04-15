@@ -9018,40 +9018,20 @@ var author$project$Main$getProjectile = F3(
 			2));
 		return (elm$core$Basics$tan(angle) * x) - (blob * A2(elm$core$Basics$pow, x, 2));
 	});
-var author$project$Main$handleError = F2(
-	function (model, error) {
-		switch (error.$) {
-			case 'BadUrl':
-				var url = error.a;
-				return _Utils_update(
-					model,
-					{error: 'bad url: ' + url});
-			case 'Timeout':
-				return _Utils_update(
-					model,
-					{error: 'timeout'});
-			case 'NetworkError':
-				return _Utils_update(
-					model,
-					{error: 'network error'});
-			case 'BadStatus':
-				var i = error.a;
-				return _Utils_update(
-					model,
-					{
-						error: 'bad status ' + elm$core$String$fromInt(i)
-					});
-			default:
-				var body = error.a;
-				return _Utils_update(
-					model,
-					{error: 'bad body ' + body});
-		}
-	});
-var author$project$Main$GotHighscoreResponse = function (a) {
-	return {$: 'GotHighscoreResponse', a: a};
+var author$project$Main$GetUserInfo = function (a) {
+	return {$: 'GetUserInfo', a: a};
 };
-var elm$json$Json$Encode$int = _Json_wrap;
+var author$project$Main$UserInfo = F2(
+	function (username, highscore) {
+		return {highscore: highscore, username: username};
+	});
+var elm$json$Json$Decode$string = _Json_decodeString;
+var author$project$Main$highscoreDecoder = A3(
+	elm$json$Json$Decode$map2,
+	author$project$Main$UserInfo,
+	A2(elm$json$Json$Decode$field, 'username', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'highscore', elm$json$Json$Decode$int));
+var author$project$Main$rootUrl = 'https://mac1xa3.ca/e/leej229/';
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -9066,20 +9046,29 @@ var elm$json$Json$Encode$object = function (pairs) {
 			pairs));
 };
 var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$highscoreEncoder = F2(
-	function (username, highscore) {
-		return elm$json$Json$Encode$object(
-			_List_fromArray(
-				[
-					_Utils_Tuple2(
-					'username',
-					elm$json$Json$Encode$string(username)),
-					_Utils_Tuple2(
-					'highscore',
-					elm$json$Json$Encode$int(highscore))
-				]));
+var author$project$Main$userPassEncoder = function (model) {
+	return elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'username',
+				elm$json$Json$Encode$string(model.credentials.username)),
+				_Utils_Tuple2(
+				'password',
+				elm$json$Json$Encode$string(model.credentials.password))
+			]));
+};
+var elm$core$Result$mapError = F2(
+	function (f, result) {
+		if (result.$ === 'Ok') {
+			var v = result.a;
+			return elm$core$Result$Ok(v);
+		} else {
+			var e = result.a;
+			return elm$core$Result$Err(
+				f(e));
+		}
 	});
-var author$project$Main$rootUrl = 'https://mac1xa3.ca/e/leej229/';
 var elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
@@ -9503,17 +9492,6 @@ var elm$http$Http$expectStringResponse = F2(
 			elm$core$Basics$identity,
 			A2(elm$core$Basics$composeR, toResult, toMsg));
 	});
-var elm$core$Result$mapError = F2(
-	function (f, result) {
-		if (result.$ === 'Ok') {
-			var v = result.a;
-			return elm$core$Result$Ok(v);
-		} else {
-			var e = result.a;
-			return elm$core$Result$Err(
-				f(e));
-		}
-	});
 var elm$http$Http$BadBody = function (a) {
 	return {$: 'BadBody', a: a};
 };
@@ -9548,12 +9526,20 @@ var elm$http$Http$resolve = F2(
 					toResult(body));
 		}
 	});
-var elm$http$Http$expectString = function (toMsg) {
-	return A2(
-		elm$http$Http$expectStringResponse,
-		toMsg,
-		elm$http$Http$resolve(elm$core$Result$Ok));
-};
+var elm$json$Json$Decode$decodeString = _Json_runOnString;
+var elm$http$Http$expectJson = F2(
+	function (toMsg, decoder) {
+		return A2(
+			elm$http$Http$expectStringResponse,
+			toMsg,
+			elm$http$Http$resolve(
+				function (string) {
+					return A2(
+						elm$core$Result$mapError,
+						elm$json$Json$Decode$errorToString,
+						A2(elm$json$Json$Decode$decodeString, decoder, string));
+				}));
+	});
 var elm$http$Http$jsonBody = function (value) {
 	return A2(
 		_Http_pair,
@@ -9712,6 +9698,68 @@ var elm$http$Http$post = function (r) {
 	return elm$http$Http$request(
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
+var author$project$Main$getUserInfo = function (model) {
+	return elm$http$Http$post(
+		{
+			body: elm$http$Http$jsonBody(
+				author$project$Main$userPassEncoder(model)),
+			expect: A2(elm$http$Http$expectJson, author$project$Main$GetUserInfo, author$project$Main$highscoreDecoder),
+			url: author$project$Main$rootUrl + 'viewhighscore/'
+		});
+};
+var author$project$Main$handleError = F2(
+	function (model, error) {
+		switch (error.$) {
+			case 'BadUrl':
+				var url = error.a;
+				return _Utils_update(
+					model,
+					{error: 'bad url: ' + url});
+			case 'Timeout':
+				return _Utils_update(
+					model,
+					{error: 'timeout'});
+			case 'NetworkError':
+				return _Utils_update(
+					model,
+					{error: 'network error'});
+			case 'BadStatus':
+				var i = error.a;
+				return _Utils_update(
+					model,
+					{
+						error: 'bad status ' + elm$core$String$fromInt(i)
+					});
+			default:
+				var body = error.a;
+				return _Utils_update(
+					model,
+					{error: 'bad body ' + body});
+		}
+	});
+var author$project$Main$GotHighscoreResponse = function (a) {
+	return {$: 'GotHighscoreResponse', a: a};
+};
+var elm$json$Json$Encode$int = _Json_wrap;
+var author$project$Main$highscoreEncoder = F2(
+	function (username, highscore) {
+		return elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'username',
+					elm$json$Json$Encode$string(username)),
+					_Utils_Tuple2(
+					'highscore',
+					elm$json$Json$Encode$int(highscore))
+				]));
+	});
+var elm$http$Http$expectString = function (toMsg) {
+	return A2(
+		elm$http$Http$expectStringResponse,
+		toMsg,
+		elm$http$Http$resolve(elm$core$Result$Ok));
+};
 var author$project$Main$highscorePost = F2(
 	function (username, highscore) {
 		return elm$http$Http$post(
@@ -9770,18 +9818,6 @@ var author$project$Main$isCollision = function (model) {
 };
 var author$project$Main$GotLoginResponse = function (a) {
 	return {$: 'GotLoginResponse', a: a};
-};
-var author$project$Main$userPassEncoder = function (model) {
-	return elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'username',
-				elm$json$Json$Encode$string(model.credentials.username)),
-				_Utils_Tuple2(
-				'password',
-				elm$json$Json$Encode$string(model.credentials.password))
-			]));
 };
 var author$project$Main$loginPost = function (model) {
 	return elm$http$Http$post(
@@ -10033,14 +10069,18 @@ var author$project$Main$update = F2(
 					model,
 					author$project$Main$signupPost(model));
 			case 'LogOutScreen':
+				var oldUserInfo = model.userinfo;
 				var oldCredentials = model.credentials;
+				var newUserInfo = _Utils_update(
+					oldUserInfo,
+					{highscore: 0, username: ''});
 				var newCredentials = _Utils_update(
 					oldCredentials,
 					{password: '', username: ''});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{credentials: newCredentials, screen: author$project$Main$Login}),
+						{credentials: newCredentials, screen: author$project$Main$Login, userinfo: newUserInfo}),
 					elm$core$Platform$Cmd$none);
 			case 'GoBack':
 				var oldCredentials = model.credentials;
@@ -10088,9 +10128,22 @@ var author$project$Main$update = F2(
 						A2(author$project$Main$handleError, model, error),
 						elm$core$Platform$Cmd$none);
 				}
-			case 'GetUserHighScore':
+			case 'GetUserInfo':
 				var result = msg.a;
-				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				if (result.$ === 'Ok') {
+					var newModel = result.a;
+					var newUserInfo = newModel;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{userinfo: newModel}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					var error = result.a;
+					return _Utils_Tuple2(
+						A2(author$project$Main$handleError, model, error),
+						elm$core$Platform$Cmd$none);
+				}
 			default:
 				var result = msg.a;
 				if (result.$ === 'Ok') {
@@ -10107,7 +10160,7 @@ var author$project$Main$update = F2(
 								{
 									screen: author$project$Main$Game(author$project$Main$Start)
 								}),
-							elm$core$Platform$Cmd$none);
+							author$project$Main$getUserInfo(model));
 					}
 				} else {
 					var error = result.a;
@@ -10719,7 +10772,6 @@ var elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
-var elm$json$Json$Decode$string = _Json_decodeString;
 var elm$html$Html$Events$targetValue = A2(
 	elm$json$Json$Decode$at,
 	_List_fromArray(
@@ -10738,7 +10790,7 @@ var author$project$Main$view = function (model) {
 	var usertest = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(0, -40),
-		A2(author$project$Main$textOutline, model.userinfo.username + ('/' + model.credentials.password), 4));
+		A2(author$project$Main$textOutline, model.credentials.username + ('/' + model.credentials.password), 4));
 	var userText = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-12, -2),
