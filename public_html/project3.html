@@ -8933,6 +8933,7 @@ var author$project$Main$init = F3(
 			bigPlayer: author$project$Main$Player2,
 			count: 0,
 			credentials: {password: '', username: ''},
+			deviceTheme: author$project$Main$Theme1,
 			error: '',
 			jumpX: 1.5,
 			jumpingPlayer: author$project$Main$None,
@@ -8964,17 +8965,8 @@ var author$project$Main$Theme2 = {$: 'Theme2'};
 var author$project$Main$Theme3 = {$: 'Theme3'};
 var author$project$Main$Theme4 = {$: 'Theme4'};
 var author$project$Main$Theme5 = {$: 'Theme5'};
-var author$project$Main$Theme6 = {$: 'Theme6'};
-var author$project$Main$Theme7 = {$: 'Theme7'};
-var author$project$Main$Theme8 = {$: 'Theme8'};
 var author$project$Main$changeThemeLeft = function (colorTheme) {
 	switch (colorTheme.$) {
-		case 'Theme8':
-			return author$project$Main$Theme7;
-		case 'Theme7':
-			return author$project$Main$Theme6;
-		case 'Theme6':
-			return author$project$Main$Theme5;
 		case 'Theme5':
 			return author$project$Main$Theme4;
 		case 'Theme4':
@@ -8984,7 +8976,7 @@ var author$project$Main$changeThemeLeft = function (colorTheme) {
 		case 'Theme2':
 			return author$project$Main$Theme1;
 		default:
-			return author$project$Main$Theme8;
+			return author$project$Main$Theme5;
 	}
 };
 var author$project$Main$changeThemeRight = function (colorTheme) {
@@ -8997,12 +8989,6 @@ var author$project$Main$changeThemeRight = function (colorTheme) {
 			return author$project$Main$Theme4;
 		case 'Theme4':
 			return author$project$Main$Theme5;
-		case 'Theme5':
-			return author$project$Main$Theme6;
-		case 'Theme6':
-			return author$project$Main$Theme7;
-		case 'Theme7':
-			return author$project$Main$Theme8;
 		default:
 			return author$project$Main$Theme1;
 	}
@@ -10064,6 +10050,22 @@ var author$project$Main$update = F2(
 							theme: author$project$Main$changeThemeLeft(model.theme)
 						}),
 					elm$core$Platform$Cmd$none);
+			case 'ChangeDeviceColorUp':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							deviceTheme: author$project$Main$changeThemeLeft(model.deviceTheme)
+						}),
+					elm$core$Platform$Cmd$none);
+			case 'ChangeDeviceColorDown':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							deviceTheme: author$project$Main$changeThemeLeft(model.deviceTheme)
+						}),
+					elm$core$Platform$Cmd$none);
 			case 'LoginPost':
 				return _Utils_Tuple2(
 					model,
@@ -10174,7 +10176,7 @@ var author$project$Main$update = F2(
 						A2(author$project$Main$handleError, model, error),
 						elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'GotLoginResponse':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
 					switch (result.a) {
@@ -10213,6 +10215,14 @@ var author$project$Main$update = F2(
 						A2(author$project$Main$handleError, model, error),
 						elm$core$Platform$Cmd$none);
 				}
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							screen: author$project$Main$Game(author$project$Main$Start)
+						}),
+					elm$core$Platform$Cmd$none);
 		}
 	});
 var MacCASOutreach$graphicsvg$GraphicSVG$NoLine = {$: 'NoLine'};
@@ -10556,15 +10566,19 @@ var MacCASOutreach$graphicsvg$GraphicSVG$collage = F3(
 	function (w, h, shapes) {
 		return A3(MacCASOutreach$graphicsvg$GraphicSVG$Collage, w, h, shapes);
 	});
+var MacCASOutreach$graphicsvg$GraphicSVG$green = A4(MacCASOutreach$graphicsvg$GraphicSVG$RGBA, 115, 210, 22, 1);
 var MacCASOutreach$graphicsvg$GraphicSVG$grey = A4(MacCASOutreach$graphicsvg$GraphicSVG$RGBA, 211, 215, 207, 1);
 var MacCASOutreach$graphicsvg$GraphicSVG$html = F3(
 	function (w, h, htm) {
 		return A3(MacCASOutreach$graphicsvg$GraphicSVG$ForeignObject, w, h, htm);
 	});
+var MacCASOutreach$graphicsvg$GraphicSVG$lightGrey = A4(MacCASOutreach$graphicsvg$GraphicSVG$RGBA, 238, 238, 236, 1);
 var MacCASOutreach$graphicsvg$GraphicSVG$lightRed = A4(MacCASOutreach$graphicsvg$GraphicSVG$RGBA, 239, 41, 41, 1);
-var MacCASOutreach$graphicsvg$GraphicSVG$lightYellow = A4(MacCASOutreach$graphicsvg$GraphicSVG$RGBA, 255, 233, 79, 1);
 var MacCASOutreach$graphicsvg$GraphicSVG$mirrorX = function (shape) {
 	return A3(MacCASOutreach$graphicsvg$GraphicSVG$Scale, -1, 1, shape);
+};
+var MacCASOutreach$graphicsvg$GraphicSVG$mirrorY = function (shape) {
+	return A3(MacCASOutreach$graphicsvg$GraphicSVG$Scale, 1, -1, shape);
 };
 var MacCASOutreach$graphicsvg$GraphicSVG$notifyTap = F2(
 	function (msg, shape) {
@@ -10715,6 +10729,8 @@ var MacCASOutreach$graphicsvg$GraphicSVG$underline = function (stencil) {
 };
 var author$project$Main$ChangeColorThemeLeft = {$: 'ChangeColorThemeLeft'};
 var author$project$Main$ChangeColorThemeRight = {$: 'ChangeColorThemeRight'};
+var author$project$Main$ChangeDeviceColorDown = {$: 'ChangeDeviceColorDown'};
+var author$project$Main$ChangeDeviceColorUp = {$: 'ChangeDeviceColorUp'};
 var author$project$Main$GoBack = {$: 'GoBack'};
 var author$project$Main$GotoSignUpScreen = {$: 'GotoSignUpScreen'};
 var author$project$Main$LogOutScreen = {$: 'LogOutScreen'};
@@ -10723,16 +10739,41 @@ var author$project$Main$Password = function (a) {
 	return {$: 'Password', a: a};
 };
 var author$project$Main$SignUpPost = {$: 'SignUpPost'};
+var author$project$Main$ToGame = {$: 'ToGame'};
 var author$project$Main$Username = function (a) {
 	return {$: 'Username', a: a};
 };
-var author$project$Main$colorThemeToColor = function (colorTheme) {
+var author$project$Main$colorThemeToDeviceColor = function (colorTheme) {
+	switch (colorTheme.$) {
+		case 'Theme1':
+			return _Utils_Tuple2(
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 154, 157, 170),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 212, 53, 79));
+		case 'Theme2':
+			return _Utils_Tuple2(
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 38, 54, 98),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 212, 53, 79));
+		case 'Theme3':
+			return _Utils_Tuple2(
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 156, 213, 190),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 38, 54, 98));
+		case 'Theme4':
+			return _Utils_Tuple2(
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 39, 62, 72),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 178, 187, 57));
+		default:
+			return _Utils_Tuple2(
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 83, 113, 74),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 171, 197, 99));
+	}
+};
+var author$project$Main$colorThemeToPlayerColor = function (colorTheme) {
 	switch (colorTheme.$) {
 		case 'Theme1':
 			return _Utils_Tuple2(MacCASOutreach$graphicsvg$GraphicSVG$red, MacCASOutreach$graphicsvg$GraphicSVG$blue);
 		case 'Theme2':
 			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 72, 35, 212),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 187, 185, 190),
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 169, 252, 136));
 		case 'Theme3':
 			return _Utils_Tuple2(
@@ -10740,44 +10781,12 @@ var author$project$Main$colorThemeToColor = function (colorTheme) {
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 223, 220, 234));
 		case 'Theme4':
 			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 36, 54, 101),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 139, 216, 189));
-		case 'Theme5':
-			return _Utils_Tuple2(
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 227, 52, 82),
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 215, 243, 110));
-		case 'Theme6':
-			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 44, 50, 79),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 245, 215, 96));
-		case 'Theme7':
+		default:
 			return _Utils_Tuple2(
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 41, 96, 45),
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 255, 225, 89));
-		default:
-			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 227, 52, 82),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 74, 216, 133));
-	}
-};
-var author$project$Main$colorThemeToString = function (colorTheme) {
-	switch (colorTheme.$) {
-		case 'Theme1':
-			return '1';
-		case 'Theme2':
-			return '2';
-		case 'Theme3':
-			return '3';
-		case 'Theme4':
-			return '4';
-		case 'Theme5':
-			return '5';
-		case 'Theme6':
-			return '6';
-		case 'Theme7':
-			return '7';
-		default:
-			return '8';
 	}
 };
 var author$project$Main$textOutline = F2(
@@ -10856,24 +10865,85 @@ var author$project$Main$view = function (model) {
 				[userShape, userText])));
 	var user = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-50, -45),
+		_Utils_Tuple2(-45, -45),
 		A2(author$project$Main$textOutline, 'By User: ' + model.overallHighscore.username, 3));
-	var title = 'Clash!';
-	var themeText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-13, -1),
+	var upTriangle = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
+		author$project$Main$ChangeDeviceColorUp,
 		A2(
-			author$project$Main$textOutline,
-			'Change Theme: ' + author$project$Main$colorThemeToString(model.theme),
-			3));
-	var themeShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
+			MacCASOutreach$graphicsvg$GraphicSVG$move,
+			_Utils_Tuple2(28.5, -40),
+			A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$rotate,
+				3.14 / 2,
+				A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$filled,
+					MacCASOutreach$graphicsvg$GraphicSVG$black,
+					MacCASOutreach$graphicsvg$GraphicSVG$triangle(2)))));
+	var togame = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
+		author$project$Main$ToGame,
 		A2(
 			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$lightYellow,
-			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 43, 7, 2)));
+			MacCASOutreach$graphicsvg$GraphicSVG$green,
+			MacCASOutreach$graphicsvg$GraphicSVG$square(5)));
+	var title = 'Clash!';
+	var themeUp = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
+		author$project$Main$ChangeDeviceColorUp,
+		A2(
+			MacCASOutreach$graphicsvg$GraphicSVG$move,
+			_Utils_Tuple2(28.5, -40),
+			A3(
+				MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+				MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+				MacCASOutreach$graphicsvg$GraphicSVG$black,
+				A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$filled,
+					author$project$Main$colorThemeToDeviceColor(model.deviceTheme).b,
+					MacCASOutreach$graphicsvg$GraphicSVG$circle(4)))));
+	var themeRight = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
+		author$project$Main$ChangeColorThemeRight,
+		A2(
+			MacCASOutreach$graphicsvg$GraphicSVG$move,
+			_Utils_Tuple2(36, -48),
+			A3(
+				MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+				MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+				MacCASOutreach$graphicsvg$GraphicSVG$black,
+				A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$filled,
+					author$project$Main$colorThemeToDeviceColor(model.deviceTheme).b,
+					MacCASOutreach$graphicsvg$GraphicSVG$circle(4)))));
+	var themeLeft = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
+		author$project$Main$ChangeColorThemeLeft,
+		A2(
+			MacCASOutreach$graphicsvg$GraphicSVG$move,
+			_Utils_Tuple2(21, -48),
+			A3(
+				MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+				MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+				MacCASOutreach$graphicsvg$GraphicSVG$black,
+				A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$filled,
+					author$project$Main$colorThemeToDeviceColor(model.deviceTheme).b,
+					MacCASOutreach$graphicsvg$GraphicSVG$circle(4)))));
+	var themeDown = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
+		author$project$Main$ChangeDeviceColorDown,
+		A2(
+			MacCASOutreach$graphicsvg$GraphicSVG$move,
+			_Utils_Tuple2(28.5, -56),
+			A3(
+				MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+				MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+				MacCASOutreach$graphicsvg$GraphicSVG$black,
+				A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$filled,
+					author$project$Main$colorThemeToDeviceColor(model.deviceTheme).b,
+					MacCASOutreach$graphicsvg$GraphicSVG$circle(4)))));
 	var signUpTitle = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-24, 40),
@@ -10907,7 +10977,7 @@ var author$project$Main$view = function (model) {
 		author$project$Main$ChangeColorThemeRight,
 		A2(
 			MacCASOutreach$graphicsvg$GraphicSVG$move,
-			_Utils_Tuple2(18, 0),
+			_Utils_Tuple2(36, -48),
 			A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
 				MacCASOutreach$graphicsvg$GraphicSVG$black,
@@ -10961,7 +11031,7 @@ var author$project$Main$view = function (model) {
 			MacCASOutreach$graphicsvg$GraphicSVG$black,
 			A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
-				author$project$Main$colorThemeToColor(model.theme).b,
+				author$project$Main$colorThemeToPlayerColor(model.theme).b,
 				MacCASOutreach$graphicsvg$GraphicSVG$square(16)))) : A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(0.0, 1.5),
@@ -10971,7 +11041,7 @@ var author$project$Main$view = function (model) {
 			MacCASOutreach$graphicsvg$GraphicSVG$black,
 			A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
-				author$project$Main$colorThemeToColor(model.theme).b,
+				author$project$Main$colorThemeToPlayerColor(model.theme).b,
 				MacCASOutreach$graphicsvg$GraphicSVG$square(8))));
 	var player2 = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
@@ -11009,7 +11079,7 @@ var author$project$Main$view = function (model) {
 			MacCASOutreach$graphicsvg$GraphicSVG$black,
 			A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
-				author$project$Main$colorThemeToColor(model.theme).a,
+				author$project$Main$colorThemeToPlayerColor(model.theme).a,
 				MacCASOutreach$graphicsvg$GraphicSVG$square(16)))) : A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(0.0, 1.5),
@@ -11019,7 +11089,7 @@ var author$project$Main$view = function (model) {
 			MacCASOutreach$graphicsvg$GraphicSVG$black,
 			A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
-				author$project$Main$colorThemeToColor(model.theme).a,
+				author$project$Main$colorThemeToPlayerColor(model.theme).a,
 				MacCASOutreach$graphicsvg$GraphicSVG$square(8))));
 	var player1 = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
@@ -11051,12 +11121,12 @@ var author$project$Main$view = function (model) {
 		A2(author$project$Main$textOutline, 'Logout', 6));
 	var logoutShape = A3(
 		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+		MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
 		MacCASOutreach$graphicsvg$GraphicSVG$black,
 		A2(
 			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$grey,
-			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10)));
+			A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 212, 53, 79),
+			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 30, 10, 2)));
 	var logoutButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$LogOutScreen,
@@ -11065,7 +11135,7 @@ var author$project$Main$view = function (model) {
 			0.7,
 			A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$move,
-				_Utils_Tuple2(40, -75),
+				_Utils_Tuple2(41, -96),
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
 						[logoutShape, logoutText])))));
@@ -11102,18 +11172,12 @@ var author$project$Main$view = function (model) {
 		author$project$Main$ChangeColorThemeLeft,
 		A2(
 			MacCASOutreach$graphicsvg$GraphicSVG$move,
-			_Utils_Tuple2(-18, 0),
+			_Utils_Tuple2(21, -48),
 			MacCASOutreach$graphicsvg$GraphicSVG$mirrorX(
 				A2(
 					MacCASOutreach$graphicsvg$GraphicSVG$filled,
 					MacCASOutreach$graphicsvg$GraphicSVG$black,
 					MacCASOutreach$graphicsvg$GraphicSVG$triangle(2)))));
-	var theme = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(25, -41),
-		MacCASOutreach$graphicsvg$GraphicSVG$group(
-			_List_fromArray(
-				[themeShape, themeText, rightTriangle, leftTriangle])));
 	var instructions4 = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-22, 25),
@@ -11163,23 +11227,37 @@ var author$project$Main$view = function (model) {
 					MacCASOutreach$graphicsvg$GraphicSVG$bold(
 						MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
 							MacCASOutreach$graphicsvg$GraphicSVG$text('Instructions')))))));
+	var highscoreShape = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(-24, -44),
+		A3(
+			MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+			MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+			MacCASOutreach$graphicsvg$GraphicSVG$black,
+			A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$filled,
+				MacCASOutreach$graphicsvg$GraphicSVG$lightGrey,
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 47, 20, 2))));
 	var highscorePoints = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-50, -50),
+		_Utils_Tuple2(-45, -50),
 		A2(
 			author$project$Main$textOutline,
 			'Your highscore is: ' + elm$core$String$fromInt(model.userinfo.highscore),
 			3));
 	var highScore = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-50, -40),
+		_Utils_Tuple2(-45, -40),
 		A2(
 			author$project$Main$textOutline,
-			'Overall High Score: ' + elm$core$String$fromInt(model.overallHighscore.highscore),
+			'Overall Highscore: ' + elm$core$String$fromInt(model.overallHighscore.highscore),
 			4));
-	var highScoreBoard = MacCASOutreach$graphicsvg$GraphicSVG$group(
-		_List_fromArray(
-			[highScore, user, highscorePoints]));
+	var overallHighscore = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(3, -3),
+		MacCASOutreach$graphicsvg$GraphicSVG$group(
+			_List_fromArray(
+				[highscoreShape, highScore, user, highscorePoints])));
 	var gotoSignUpText = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-10, -2),
@@ -11228,6 +11306,14 @@ var author$project$Main$view = function (model) {
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
 						[goBackShape, goBackText])))));
+	var gamebody = A3(
+		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+		MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
+		MacCASOutreach$graphicsvg$GraphicSVG$black,
+		A2(
+			MacCASOutreach$graphicsvg$GraphicSVG$filled,
+			author$project$Main$colorThemeToDeviceColor(model.deviceTheme).a,
+			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 100, 148, 5)));
 	var gameStart = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-29, 15),
@@ -11269,6 +11355,23 @@ var author$project$Main$view = function (model) {
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 177, 227, 127),
 				A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 100, 20))));
+	var downTriangle = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
+		author$project$Main$ChangeDeviceColorDown,
+		A2(
+			MacCASOutreach$graphicsvg$GraphicSVG$move,
+			_Utils_Tuple2(28.5, -56),
+			MacCASOutreach$graphicsvg$GraphicSVG$mirrorY(
+				A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$rotate,
+					3.14 / 2,
+					A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$filled,
+						MacCASOutreach$graphicsvg$GraphicSVG$black,
+						MacCASOutreach$graphicsvg$GraphicSVG$triangle(2))))));
+	var themeButtons = MacCASOutreach$graphicsvg$GraphicSVG$group(
+		_List_fromArray(
+			[themeLeft, leftTriangle, themeRight, rightTriangle, themeUp, upTriangle, themeDown, downTriangle]));
 	var caption = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-13, 54),
@@ -11332,7 +11435,8 @@ var author$project$Main$view = function (model) {
 						passwordBox,
 						loginButton,
 						gotoSignUpButton,
-						usertest
+						usertest,
+						togame
 					]);
 			case 'SignUp':
 				return _List_fromArray(
@@ -11383,7 +11487,7 @@ var author$project$Main$view = function (model) {
 					]);
 			default:
 				return _List_fromArray(
-					[background, caption, points, startText, gameOver, highScoreBoard, theme, floor, player1, player2, logoutButton]);
+					[gamebody, background, caption, points, startText, gameOver, overallHighscore, floor, player1, player2, logoutButton, themeButtons]);
 		}
 	}();
 	var body = A3(MacCASOutreach$graphicsvg$GraphicSVG$collage, 101, 150, shapes);

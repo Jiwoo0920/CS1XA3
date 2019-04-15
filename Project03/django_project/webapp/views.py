@@ -40,6 +40,8 @@ def view_overall_highscore(request):
 			recordHolder['highscore'] = user.highscore
 	return JsonResponse(recordHolder)
 
+def leaderboard(request):
+	pass
 
 def sign_up(request):
 	json_req = json.loads(request.body)
