@@ -43,13 +43,27 @@ def view_overall_highscore(request):
 def leaderboard(request):
 	pass
 
+def update_settings(request):
+	json_req = json.loads(request.body.decode('utf-8'))
+	print("print:"+str(json_req))
+	uname = json_req.get('username','')
+	playerTheme = json_req.get('playerTheme',1)
+	deviceTheme = json_req.get('deviceTheme',1)
+	user = User.objects.get(username=uname)
+	userinfo = UserInfo.objects.get(user=user)
+	userinfo.playerTheme = playerTheme
+	userinfo.deviceTheme = deviceTheme
+	userinfo.save()
+	user.save()
+	return HttpResponse('UpdateSettingsSuccess')
+
 def sign_up(request):
 	json_req = json.loads(request.body)
 	uname = json_req.get('username','')
 	passw = json_req.get('password','')
 	if uname != '' and passw != '':
 		user = User.objects.create_user(username=uname, password=passw)
-		userinfo = UserInfo.objects.create(user=user,highscore=0)
+		userinfo = UserInfo.objects.create(user=user,highscore=0,playerTheme='1',deviceTheme='1')
 		user.save()
 		userinfo.save()
 		login(request,user)

@@ -37,6 +37,7 @@ type Msg = Tick Float GetKeyState
          | GetUserInfo (Result Http.Error UserInfo)
          | GetOverallHighscore (Result Http.Error UserInfo)
          | ToGame
+         | GotSettingPostResponse (Result Http.Error String) 
 
 
 type Player = Player1 | Player2 | None
@@ -60,11 +61,10 @@ type alias Model = { screen : Screen
                    , bigPlayer : Player
                    , points : Int 
                    , jumpingPlayer : Player
-                   , theme : ColorTheme
-                   , deviceTheme : ColorTheme
                    , credentials : Credentials
                    , userinfo : UserInfo
                    , overallHighscore : OverallHighscore
+                   , settings : Settings
                    } 
 
 --Need for server
@@ -160,7 +160,7 @@ colorThemeToPlayerColor : ColorTheme -> (Color, Color)
 colorThemeToPlayerColor colorTheme = 
         case colorTheme of 
                 Theme1 -> (red, blue)
-                Theme2 -> (rgb 187 185 190, rgb 169 252 136)
+                Theme2 -> (rgb 209 68 86, rgb 169 252 136)
                 Theme3 -> (rgb 230 25 75, rgb 223 220 234)
                 Theme4 -> (rgb 227 52 82, rgb 215 243 110)
                 Theme5 -> (rgb 41 96 45, rgb 255 225 89)
@@ -180,12 +180,12 @@ colorThemeToString colorTheme =
                 Theme1 -> "1"
                 Theme2 -> "2"
                 Theme3 -> "3"
-                Theme4 -> "4"
+                Theme4 -> "4" 
                 Theme5 -> "5"
 
 stringToColorTheme : String -> ColorTheme 
-stringToColorTheme colorTheme =    
-    case colorTheme of 
+stringToColorTheme string =
+    case string of  
         "1" -> Theme1 
         "2" -> Theme2 
         "3" -> Theme3 
@@ -268,6 +268,30 @@ getOverallHighscore =
         { url = rootUrl ++ "viewoverallhighscore/"
         , expect = Http.expectJson GetOverallHighscore highscoreDecoder
         }
+
+--Settings 
+settingsEncoder : String -> ColorTheme -> ColorTheme -> JEncode.Value
+settingsEncoder username playerTheme deviceTheme = 
+    JEncode.object
+        [ ("username", JEncode.string username)
+        , ("playerTheme", JEncode.string (colorThemeToString playerTheme))
+        , ("deviceTheme", JEncode.string (colorThemeToString deviceTheme))
+        ]
+
+settingsPost : String -> ColorTheme -> ColorTheme -> Cmd Msg
+settingsPost username playerTheme deviceTheme =
+    Http.post
+        { url = rootUrl ++ "updatesettings/"
+        , body = Http.jsonBody <| settingsEncoder username playerTheme deviceTheme
+        , expect = Http.expectString GotSettingPostResponse
+        }
+-- settingsDecoder : JDecode.Decoder Settings 
+-- settingsDecoder =
+--     JDecode.map3 Settings  
+--         (JDecode.field "username" JDecode.string)
+--         (JDecode.field "playerTheme" JDecode.string)
+--         (JDecode.field "deviceTheme" JDecode.string)
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
@@ -281,11 +305,11 @@ init flags url key =
                 , bigPlayer = Player2
                 , points = 0
                 , jumpingPlayer = None
-                , theme = Theme1
-                , deviceTheme = Theme1
                 , credentials = {username = "", password = ""}
                 , userinfo= {username = "", highscore = 0}
                 , overallHighscore = {username = "", highscore = 0}
+                , settings = {username = "", playerTheme = Theme1, deviceTheme = Theme1 }
+                
                 }   
     in ( model , randDecideSize) -- add init model
 
@@ -396,13 +420,41 @@ update msg model = case msg of
 
         DecideBigPlayer player -> ({model | bigPlayer = player}, getOverallHighscore) --where to put getoverall highscore lol NOTE!!
 
-        ChangeColorThemeRight -> ({model | theme = changeThemeRight model.theme}, Cmd.none)
+        ChangeColorThemeRight -> 
+            let
+                oldSettings = model.settings
+                newTheme = changeThemeRight oldSettings.playerTheme
+                newSettings = {oldSettings | playerTheme = newTheme}
+                message = settingsPost model.settings.username newTheme model.settings.deviceTheme
+            in
+                ({model | settings = newSettings},message)
+        
+        ChangeColorThemeLeft ->             
+            let
+                oldSettings = model.settings
+                newTheme = changeThemeLeft oldSettings.playerTheme
+                newSettings = {oldSettings | playerTheme = newTheme}
+                message = settingsPost model.settings.username newTheme model.settings.deviceTheme
+            in
+                ({model | settings = newSettings}, message)
+        
+        ChangeDeviceColorUp -> 
+            let
+                oldSettings = model.settings
+                newTheme = changeThemeRight oldSettings.deviceTheme
+                newSettings = {oldSettings | deviceTheme = newTheme }
+                message = settingsPost model.settings.username model.settings.playerTheme newTheme
+            in
+                ({model | settings = newSettings}, message)
 
-        ChangeColorThemeLeft -> ({model | theme = changeThemeLeft model.theme}, Cmd.none)
-
-        ChangeDeviceColorUp -> ({model | deviceTheme = changeThemeLeft model.deviceTheme}, Cmd.none)
-
-        ChangeDeviceColorDown -> ({model | deviceTheme = changeThemeLeft model.deviceTheme}, Cmd.none)
+        ChangeDeviceColorDown ->             
+            let
+                oldSettings = model.settings
+                newTheme = changeThemeLeft oldSettings.deviceTheme
+                newSettings = {oldSettings | deviceTheme = newTheme }
+                message = settingsPost model.settings.username model.settings.playerTheme newTheme
+            in
+                ({model | settings = newSettings}, message)
 
         --Login
         LoginPost -> (model, loginPost model) --log in button
@@ -422,8 +474,10 @@ update msg model = case msg of
                 newCredentials= { oldCredentials | username = "", password = ""}
                 oldUserInfo = model.userinfo 
                 newUserInfo = { oldUserInfo | username = "", highscore = 0}
+                oldSettings = model.settings   
+                newSettings = {oldSettings | username = "", playerTheme = Theme1, deviceTheme = Theme1}
             in
-                ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login}, Cmd.none) --TODO: update logout post!!
+                ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings}, Cmd.none) --TODO: update logout post!!
         
         GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
             let
@@ -438,8 +492,10 @@ update msg model = case msg of
                 newCredentials = { oldCredentials | username = newUsername}
                 oldUserInfo = model.userinfo 
                 newUserInfo = {oldUserInfo | username = newUsername}
+                oldSettings = model.settings   
+                newSettings = {oldSettings | username = newUsername}
             in
-                ({model | credentials = newCredentials, userinfo = newUserInfo}, Cmd.none)
+                ({model | credentials = newCredentials, userinfo = newUserInfo, settings = newSettings}, Cmd.none)
 
         Password newPassword ->
             let
@@ -453,7 +509,7 @@ update msg model = case msg of
         GotHighscoreResponse result ->
             case result of
                 Ok _ -> 
-                    (model, Cmd.none)
+                    (model, getOverallHighscore) --cmd.none?
                 Err error ->
                     ( handleError model error, Cmd.none )
 
@@ -493,6 +549,14 @@ update msg model = case msg of
                     (model, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none )
+
+
+        GotSettingPostResponse result -> 
+            case result of 
+                Ok _ -> (model, Cmd.none)
+                Err error ->
+                    (handleError model error, Cmd.none)
+
 
         ToGame -> ({model | screen = Game Start}, Cmd.none)
 
@@ -722,12 +786,12 @@ view model =
         player1_body = 
                 if model.bigPlayer == Player1 then
                         square 16
-                        |> filled (first (colorThemeToPlayerColor model.theme))
+                        |> filled (first (colorThemeToPlayerColor model.settings.playerTheme))
                         |> addOutline (solid 1) black
                         |> move (0.0,5.5)
                 else
                         square 8
-                        |> filled (first (colorThemeToPlayerColor model.theme))
+                        |> filled (first (colorThemeToPlayerColor model.settings.playerTheme))
                         |> addOutline (solid 1) black
                         |> move(0.0,1.5)
 
@@ -749,12 +813,12 @@ view model =
 
         player2_body = if model.bigPlayer == Player2 then 
                     square 16
-                    |> filled (second (colorThemeToPlayerColor model.theme))
+                    |> filled (second (colorThemeToPlayerColor model.settings.playerTheme))
                     |> addOutline (solid 1) black 
                     |> move (0.0,5.5)
                 else 
                     square 8
-                    |> filled (second (colorThemeToPlayerColor model.theme))
+                    |> filled (second (colorThemeToPlayerColor model.settings.playerTheme))
                     |> addOutline (solid 1) black 
                     |> move(0.0,1.5)
 
@@ -774,7 +838,7 @@ view model =
 
         --theme
         gamebody = roundedRect 100 148 5
-            |> (filled (first (colorThemeToDeviceColor model.deviceTheme)))
+            |> (filled (first (colorThemeToDeviceColor model.settings.deviceTheme)))
             |> addOutline (solid 1) black 
 
         themeButtons = group[themeLeft, leftTriangle, themeRight, rightTriangle, themeUp, upTriangle, themeDown, downTriangle]
@@ -804,25 +868,25 @@ view model =
             |> notifyTap ChangeDeviceColorDown
 
         themeRight = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.deviceTheme)))
+            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
             |> addOutline(solid 0.7) black 
             |> move (36,-48)
             |> notifyTap ChangeColorThemeRight
 
         themeLeft = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.deviceTheme)))
+            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
             |> addOutline(solid 0.7) black 
             |> move (21,-48)
             |> notifyTap ChangeColorThemeLeft
 
         themeUp = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.deviceTheme)))
+            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
             |> addOutline(solid 0.7) black 
             |> move (28.5,-40)
             |> notifyTap ChangeDeviceColorUp
 
         themeDown = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.deviceTheme)))
+            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
             |> addOutline(solid 0.7) black 
             |> move (28.5,-56)
             |> notifyTap ChangeDeviceColorDown
