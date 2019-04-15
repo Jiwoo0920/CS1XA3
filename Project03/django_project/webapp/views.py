@@ -31,6 +31,15 @@ def view_highscore(request):
 	respDict['highscore'] = userhighscore
 	return JsonResponse(respDict)
 
+def view_overall_highscore(request):
+	recordHolder = {'username':'','highscore':0}
+	all_users = UserInfo.objects.all()
+	for user in all_users:
+		if user.highscore > recordHolder['highscore']:
+			recordHolder['username'] = user.user.username
+			recordHolder['highscore'] = user.highscore
+	return JsonResponse(recordHolder)
+
 
 def sign_up(request):
 	json_req = json.loads(request.body)

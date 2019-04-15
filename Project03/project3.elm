@@ -36,6 +36,7 @@ type Msg = Tick Float GetKeyState
          | Username String
          | Password String
          | GetUserInfo (Result Http.Error UserInfo)
+         | GetOverallHighscore (Result Http.Error UserInfo)
 
 
 type Player = Player1 | Player2 | None
@@ -60,6 +61,7 @@ type alias Model = { screen : Screen
                    , theme : ColorTheme
                    , credentials : Credentials
                    , userinfo : UserInfo
+                   , overallHighscore : OverallHighscore
                    } 
 
 --Need for server
@@ -69,6 +71,10 @@ type alias Credentials = { username : String
 
 type alias UserInfo = { username : String
                            , highscore : Int}
+
+type alias OverallHighscore = { username : String 
+                              , highscore : Int
+                              }
 
 --<<Helper Functions>>-------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Function to get the jumping motion
@@ -183,7 +189,7 @@ init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
 init flags url key = 
     let model = { screen = Login
                 , error = ""
-                , player1_pos = (-30,-10)----function model = let (a,b)=model.player1pos in update b
+                , player1_pos = (-30,-10)
                 , player2_pos = (30,-10) 
                 , count = 0
                 , jumpX = 1.5
@@ -193,6 +199,7 @@ init flags url key =
                 , theme = Theme1
                 , credentials = {username = "", password = ""}
                 , userinfo= {username = "", highscore = 0}
+                , overallHighscore = {username = "", highscore = 0}
                 }   
     in ( model , randDecideSize) -- add init model
 
@@ -301,7 +308,7 @@ update msg model = case msg of
         MakeRequest req    -> (model, Cmd.none)
         UrlChange url      -> (model, Cmd.none)
 
-        DecideBigPlayer player -> ({model | bigPlayer = player}, Cmd.none) 
+        DecideBigPlayer player -> ({model | bigPlayer = player}, getOverallHighscore) --where to put getoverall highscore lol NOTE!!
 
         ChangeColorThemeRight -> ({model | theme = changeThemeRight model.theme}, Cmd.none)
 
@@ -371,14 +378,29 @@ update msg model = case msg of
                 Err error ->
                     ( handleError model error, Cmd.none )
 
+        GetOverallHighscore result-> 
+            case result of 
+                Ok newModel -> 
+                    let 
+                        newOverallHighscore = newModel
+                    in 
+                        ( { model | overallHighscore = newOverallHighscore}, Cmd.none)
+                Err error ->    
+                    ( handleError model error, Cmd.none)
+
+
 
         --User Authentication 
         GotLoginResponse result ->
             case result of
                 Ok "LoginFailed" ->
                    ( { model | error = "Login Failed"}, Cmd.none)
-                Ok _ ->
-                    ( { model | screen = Game Start}, getUserInfo model )
+                Ok "SignupSuccess" -> 
+                    ( {model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10) }, Cmd.none)
+                Ok "LoggedIn" ->
+                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10) }, getUserInfo model )
+                Ok _ -> 
+                    (model, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none )
 
@@ -463,7 +485,19 @@ getUserInfo model =
         , expect = Http.expectJson GetUserInfo highscoreDecoder
         }
 
+--Get overall highscore from server
+overallHighscoreDecoder : JDecode.Decoder OverallHighscore    
+overallHighscoreDecoder = 
+    JDecode.map2 OverallHighscore
+        (JDecode.field "username" JDecode.string)
+        (JDecode.field "highscore" JDecode.int)
 
+getOverallHighscore : Cmd Msg 
+getOverallHighscore =  
+    Http.get 
+        { url = rootUrl ++ "viewoverallhighscore/"
+        , expect = Http.expectJson GetOverallHighscore highscoreDecoder
+        }
 
 --<<View>>
 view : Model -> { title : String, body : Collage Msg }
@@ -637,10 +671,10 @@ view model =
 
         highScoreBoard = group [highScore, user, highscorePoints]
 
-        highScore = textOutline ("High Score: ") 4
+        highScore = textOutline ("Overall High Score: " ++ String.fromInt model.overallHighscore.highscore) 4
             |> move (-50,-40)
        
-        user = textOutline ("User: ") 3
+        user = textOutline ("By User: " ++ model.overallHighscore.username) 3
             |> move (-50,-45)
 
         highscorePoints = textOutline ("Your highscore is: " ++ String.fromInt model.userinfo.highscore ) 3
