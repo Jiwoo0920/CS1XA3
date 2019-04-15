@@ -5,20 +5,29 @@ from django.contrib.auth import authenticate, login, logout
 import json
 from . models import UserInfo
 
+def session_incr(request):
+	i = request.session.get('counter',0)
+	request.session['counter'] = i+1
+	return HttpResponse("Counter = " + str(request.session['counter']))
+
+def session_get(request):
+    return HttpResponse("Counter = " + str(request.session['counter']))
 
 def get_highscore(request):
-	json_req = json.loads(request.body) #takes the request and turn to dictionary
-	username = json_req.get('username','')
-	highscore = json_req.get('highscore',0)
-	print("username:"+str(username)+" / "+"highscore:"+str(highscore))
-	user = User.objects.get(username=username)
+	#json_req = json.loads(request.body) #takes the request and turn to dictionary
+	#username = json_req.get('username','')
+	#highscore = json_req.get('highscore',0)
+	user = request.user #User.objects.get(username=username)
 	userinfo = UserInfo.objects.get(user=user)
-	if highscore > userinfo.highscore:
-		userinfo.highscore = highscore
-		userinfo.save()
-		return HttpResponse('UpdatedNewHighscore')
+	if user.is_authenticated:
+		if highscore > userinfo.highscore:
+			userinfo.highscore = highscore
+			userinfo.save()
+			return HttpResponse('UpdatedNewHighscore')
+		else:
+			return HttpResponse('NotAHighscore')
 	else:
-		return HttpResponse('NotAHighscore')
+		return HttpResponse('Error: Please login again.')
 
 def view_highscore(request):
 	reqDict = json.loads(request.body)
@@ -61,16 +70,19 @@ def get_settings(request):
 	json_req = json.loads(request.body.decode('utf-8'))
 	print("print:"+str(json_req))
 	uname = json_req.get('username','')
-	user = User.objects.get(username=uname)
-	userinfo = UserInfo.objects.get(user=user)
-	playerTheme = userinfo.playerTheme
-	deviceTheme = userinfo.deviceTheme
-	respDict = {}
-	respDict['username'] = user.username
-	respDict['playerTheme'] = playerTheme
-	respDict['deviceTheme'] = deviceTheme
-	print(str(respDict))
-	return JsonResponse(respDict)
+	user = request.user #User.objects.get(username=uname)
+	if user.is_authenticated:
+		userinfo = UserInfo.objects.get(user=user)
+		playerTheme = userinfo.playerTheme
+		deviceTheme = userinfo.deviceTheme
+		respDict = {}
+		respDict['username'] = user.username
+		respDict['playerTheme'] = playerTheme
+		respDict['deviceTheme'] = deviceTheme
+		print(str(respDict))
+		return JsonResponse(respDict)
+	else:
+		return HttpResponse("Error")
 
 def sign_up(request):
 	json_req = json.loads(request.body)

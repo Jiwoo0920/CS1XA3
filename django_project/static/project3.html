@@ -9878,14 +9878,6 @@ var author$project$Main$loginPost = function (model) {
 			url: author$project$Main$rootUrl + 'loginuser/'
 		});
 };
-var author$project$Main$GotLogoutResponse = function (a) {
-	return {$: 'GotLogoutResponse', a: a};
-};
-var author$project$Main$logout = elm$http$Http$get(
-	{
-		expect: elm$http$Http$expectString(author$project$Main$GotLogoutResponse),
-		url: author$project$Main$rootUrl + 'logoutuser/'
-	});
 var author$project$Main$GotSettingPostResponse = function (a) {
 	return {$: 'GotSettingPostResponse', a: a};
 };
@@ -10195,8 +10187,6 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					author$project$Main$loginPost(model));
-			case 'LogoutButton':
-				return _Utils_Tuple2(model, author$project$Main$logout);
 			case 'GotoSignUpScreen':
 				var oldCredentials = model.credentials;
 				var newCredentials = _Utils_update(
@@ -10211,6 +10201,24 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					author$project$Main$signupPost(model));
+			case 'LogOutScreen':
+				var oldUserInfo = model.userinfo;
+				var oldSettings = model.settings;
+				var oldCredentials = model.credentials;
+				var newUserInfo = _Utils_update(
+					oldUserInfo,
+					{highscore: 0, username: ''});
+				var newSettings = _Utils_update(
+					oldSettings,
+					{deviceTheme: author$project$Main$Theme1, playerTheme: author$project$Main$Theme1, username: ''});
+				var newCredentials = _Utils_update(
+					oldCredentials,
+					{password: '', username: ''});
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{credentials: newCredentials, screen: author$project$Main$Login, settings: newSettings, userinfo: newUserInfo}),
+					elm$core$Platform$Cmd$none);
 			case 'GoBack':
 				var oldCredentials = model.credentials;
 				var newCredentials = _Utils_update(
@@ -10323,40 +10331,6 @@ var author$project$Main$update = F2(
 								author$project$Main$loginCmdMsg(model));
 						default:
 							return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-					}
-				} else {
-					var error = result.a;
-					return _Utils_Tuple2(
-						A2(author$project$Main$handleError, model, error),
-						elm$core$Platform$Cmd$none);
-				}
-			case 'GotLogoutResponse':
-				var result = _n0.a;
-				if (result.$ === 'Ok') {
-					if (result.a === 'LoggedOut') {
-						var oldUserInfo = model.userinfo;
-						var oldSettings = model.settings;
-						var oldCredentials = model.credentials;
-						var newUserInfo = _Utils_update(
-							oldUserInfo,
-							{highscore: 0, username: ''});
-						var newSettings = _Utils_update(
-							oldSettings,
-							{deviceTheme: author$project$Main$Theme1, playerTheme: author$project$Main$Theme1, username: ''});
-						var newCredentials = _Utils_update(
-							oldCredentials,
-							{password: '', username: ''});
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{credentials: newCredentials, screen: author$project$Main$Login, settings: newSettings, userinfo: newUserInfo}),
-							elm$core$Platform$Cmd$none);
-					} else {
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{error: 'something happened'}),
-							elm$core$Platform$Cmd$none);
 					}
 				} else {
 					var error = result.a;
@@ -10907,8 +10881,8 @@ var author$project$Main$ChangeDeviceColorDown = {$: 'ChangeDeviceColorDown'};
 var author$project$Main$ChangeDeviceColorUp = {$: 'ChangeDeviceColorUp'};
 var author$project$Main$GoBack = {$: 'GoBack'};
 var author$project$Main$GotoSignUpScreen = {$: 'GotoSignUpScreen'};
+var author$project$Main$LogOutScreen = {$: 'LogOutScreen'};
 var author$project$Main$LoginPost = {$: 'LoginPost'};
-var author$project$Main$LogoutButton = {$: 'LogoutButton'};
 var author$project$Main$Password = function (a) {
 	return {$: 'Password', a: a};
 };
@@ -11303,7 +11277,7 @@ var author$project$Main$view = function (model) {
 			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 30, 10, 2)));
 	var logoutButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
-		author$project$Main$LogoutButton,
+		author$project$Main$LogOutScreen,
 		A2(
 			MacCASOutreach$graphicsvg$GraphicSVG$scale,
 			0.7,

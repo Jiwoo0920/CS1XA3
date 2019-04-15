@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('sessionincr/', views.session_incr, name='webapp-session_incr'),
+    path('sessionget/', views.session_get, name='webapp_session_get'),
     path('gethighscore/', views.get_highscore, name='webapp-get_highscore'),
     path('viewhighscore/', views.view_highscore, name='webapp-view_highscore'),
     path('viewoverallhighscore/', views.view_overall_highscore, name='webapp-view_overall_highscore'),

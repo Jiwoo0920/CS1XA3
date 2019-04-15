@@ -27,11 +27,12 @@ type Msg = Tick Float GetKeyState
          | ChangeDeviceColorUp
          | ChangeDeviceColorDown
          | LoginPost
+         | LogoutButton
          | GotoSignUpScreen
          | SignUpPost
          | GoBack
-         | LogOutScreen
          | GotLoginResponse (Result Http.Error String) 
+         | GotLogoutResponse (Result Http.Error String) 
          | GotHighscoreResponse (Result Http.Error String) 
          | Username String
          | Password String
@@ -216,6 +217,13 @@ loginPost model =
         , expect = Http.expectString GotLoginResponse
         }
 
+logout : Cmd Msg 
+logout =
+    Http.get 
+        { url = rootUrl ++ "logoutuser/"
+        , expect = Http.expectString GotLogoutResponse
+        }
+
 signupPost : Model -> Cmd Msg
 signupPost model =
     Http.post
@@ -298,13 +306,6 @@ decodeColorThemeType =
             _ -> JDecode.succeed Theme1
     )
 
--- getSettings : Cmd Msg 
--- getSettings = 
---     Http.get 
---         { url = rootUrl ++ "getsettings/"
---         , expect = Http.expectJson GetSettings settingsDecoder
---         }
-
 getSettings : Model -> Cmd Msg
 getSettings model =
     Http.post
@@ -313,7 +314,11 @@ getSettings model =
         , expect = Http.expectJson GetSettings settingsDecoder
         }
 
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+loginCmdMsg model = Cmd.batch [ getUserInfo model, getSettings model]
+gameEndCmdMosg model = Cmd.batch [highscorePost model.userinfo.username model.points]
+
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
 init flags url key = 
@@ -397,9 +402,9 @@ update msg model = case Debug.log "msg" msg of
                 else if isCollision model then 
                     let
                         newHighscore = if model.points > model.userinfo.highscore then model.points else model.userinfo.highscore 
-                        message = if model.points > model.userinfo.highscore then highscorePost model.userinfo.username model.points else Cmd.none
                         oldUserInfo = model.userinfo
                         newUserInfo= { oldUserInfo | highscore = newHighscore}
+                        message = if model.points > model.userinfo.highscore then highscorePost model.userinfo.username model.points else Cmd.none
                     in
                         ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo}, message) --sendHighscore model 
                 
@@ -434,12 +439,12 @@ update msg model = case Debug.log "msg" msg of
                         , Cmd.none)
 
                 --CASE 4) if time == 2 seconds, reset to original position
-                else (resetModel, randDecideSize)
+                else (resetModel, Cmd.batch[randDecideSize, getOverallHighscore])
         
         MakeRequest req    -> (model, Cmd.none)
         UrlChange url      -> (model, Cmd.none)
 
-        DecideBigPlayer player -> ({model | bigPlayer = player}, getOverallHighscore) --where to put getoverall highscore lol NOTE!!
+        DecideBigPlayer player -> ({model | bigPlayer = player}, Cmd.none) --where to put getoverall highscore lol NOTE!!
 
         ChangeColorThemeRight -> 
             let
@@ -479,6 +484,8 @@ update msg model = case Debug.log "msg" msg of
 
         --Login
         LoginPost -> (model, loginPost model) --log in button
+
+        LogoutButton -> (model, logout)
         
         GotoSignUpScreen -> 
             let
@@ -489,17 +496,6 @@ update msg model = case Debug.log "msg" msg of
 
         SignUpPost -> (model,signupPost model)
 
-        LogOutScreen -> 
-            let
-                oldCredentials= model.credentials
-                newCredentials= { oldCredentials | username = "", password = ""}
-                oldUserInfo = model.userinfo 
-                newUserInfo = { oldUserInfo | username = "", highscore = 0}
-                oldSettings = model.settings   
-                newSettings = {oldSettings | username = "", playerTheme = Theme1, deviceTheme = Theme1}
-            in
-                ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings}, Cmd.none) --TODO: update logout post!!
-        
         GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
             let
                 oldCredentials= model.credentials
@@ -530,14 +526,14 @@ update msg model = case Debug.log "msg" msg of
         GotHighscoreResponse result ->
             case result of
                 Ok _ -> 
-                    (model, getOverallHighscore) --cmd.none?
+                    (model, Cmd.none) --cmd.none?
                 Err error ->
                     ( handleError model error, Cmd.none )
 
         GetUserInfo result -> 
             case result of
                 Ok newModel ->
-                    ( { model | userinfo = newModel}, getSettings model)
+                    ( { model | userinfo = newModel}, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none )
 
@@ -558,11 +554,28 @@ update msg model = case Debug.log "msg" msg of
                 Ok "SignupSuccess" -> 
                     ( {model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10) }, Cmd.none)
                 Ok "LoggedIn" ->
-                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10) }, getUserInfo model )
+                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10) }, loginCmdMsg model)
                 Ok _ -> 
                     (model, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none )
+
+        GotLogoutResponse result ->
+            case result of 
+                Ok "LoggedOut" ->
+                    let
+                        oldCredentials= model.credentials
+                        newCredentials= { oldCredentials | username = "", password = ""}
+                        oldUserInfo = model.userinfo 
+                        newUserInfo = { oldUserInfo | username = "", highscore = 0}
+                        oldSettings = model.settings   
+                        newSettings = {oldSettings | username = "", playerTheme = Theme1, deviceTheme = Theme1}
+                    in
+                        ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings}, Cmd.none) --TODO: update logout post!!
+                Ok _ -> ( {model | error = "something happened"}, Cmd.none)
+                Err error ->
+                    ( handleError model error, Cmd.none)
+
 
         --Settings
         GotSettingPostResponse result -> 
@@ -918,7 +931,7 @@ view model =
         logoutButton = group [logoutShape,logoutText]
             |> move (41,-96)
             |> scale 0.7
-            |> notifyTap LogOutScreen
+            |> notifyTap LogoutButton
 
         logoutShape = roundedRect 30 10 2
             |> filled (rgb 212 53 79)
