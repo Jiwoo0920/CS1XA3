@@ -47,8 +47,8 @@ def update_settings(request):
 	json_req = json.loads(request.body.decode('utf-8'))
 	print("print:"+str(json_req))
 	uname = json_req.get('username','')
-	playerTheme = json_req.get('playerTheme',1)
-	deviceTheme = json_req.get('deviceTheme',1)
+	playerTheme = json_req.get('playerTheme','1')
+	deviceTheme = json_req.get('deviceTheme','1')
 	user = User.objects.get(username=uname)
 	userinfo = UserInfo.objects.get(user=user)
 	userinfo.playerTheme = playerTheme
@@ -56,6 +56,21 @@ def update_settings(request):
 	userinfo.save()
 	user.save()
 	return HttpResponse('UpdateSettingsSuccess')
+
+def get_settings(request):
+	json_req = json.loads(request.body.decode('utf-8'))
+	print("print:"+str(json_req))
+	uname = json_req.get('username','')
+	user = User.objects.get(username=uname)
+	userinfo = UserInfo.objects.get(user=user)
+	playerTheme = userinfo.playerTheme
+	deviceTheme = userinfo.deviceTheme
+	respDict = {}
+	respDict['username'] = user.username
+	respDict['playerTheme'] = playerTheme
+	respDict['deviceTheme'] = deviceTheme
+	print(str(respDict))
+	return JsonResponse(respDict)
 
 def sign_up(request):
 	json_req = json.loads(request.body)

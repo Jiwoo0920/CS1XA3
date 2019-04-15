@@ -15,6 +15,7 @@ import Html exposing (..)
 import Html.Attributes
 import Html.Events as Events
 import Http
+import Debug
 
 --<<Type Declaration>>
 type Msg = Tick Float GetKeyState
@@ -38,6 +39,7 @@ type Msg = Tick Float GetKeyState
          | GetOverallHighscore (Result Http.Error UserInfo)
          | ToGame
          | GotSettingPostResponse (Result Http.Error String) 
+         | GetSettings (Result Http.Error Settings)
 
 
 type Player = Player1 | Player2 | None
@@ -63,7 +65,7 @@ type alias Model = { screen : Screen
                    , jumpingPlayer : Player
                    , credentials : Credentials
                    , userinfo : UserInfo
-                   , overallHighscore : OverallHighscore
+                   , overallHighscore : UserInfo
                    , settings : Settings
                    } 
 
@@ -74,10 +76,6 @@ type alias Credentials = { username : String
 
 type alias UserInfo = { username : String
                            , highscore : Int}
-
-type alias OverallHighscore = { username : String 
-                              , highscore : Int
-                              }
 
 type alias Settings = { username : String
                       , playerTheme : ColorTheme 
@@ -168,12 +166,13 @@ colorThemeToPlayerColor colorTheme =
 colorThemeToDeviceColor : ColorTheme -> (Color, Color)
 colorThemeToDeviceColor colorTheme =   
         case colorTheme of 
-            Theme1 -> (rgb 154 157 170, rgb 212 53 79)
-            Theme2 -> (rgb 38 54 98, rgb 212 53 79)
-            Theme3 -> (rgb 156 213 190, rgb 38 54 98)
-            Theme4 -> (rgb 39 62 72, rgb 178 187 57)
-            Theme5 -> (rgb 83 113 74, rgb 171 197 99)
-
+            Theme1 -> (rgb 42 54 82, rgb 211 224 247)
+            Theme2 -> (rgb 215 243 110, rgb 227 52 82)
+            Theme3 -> (rgb 38 54 98, rgb 156 213 190)
+            Theme4 ->  (rgb 230 25 75, rgb 223 220 234)
+            Theme5 -> (rgb 73 105 72, rgb 229 232 151)
+--(rgb 249 213 102, rgb 226 62 79)
+--(rgb 39 62 72, rgb 178 187 57)
 colorThemeToString : ColorTheme -> String
 colorThemeToString colorTheme = 
         case colorTheme of 
@@ -256,12 +255,6 @@ getUserInfo model =
         }
 
 --Get overall highscore from server
-overallHighscoreDecoder : JDecode.Decoder OverallHighscore    
-overallHighscoreDecoder = 
-    JDecode.map2 OverallHighscore
-        (JDecode.field "username" JDecode.string)
-        (JDecode.field "highscore" JDecode.int)
-
 getOverallHighscore : Cmd Msg 
 getOverallHighscore =  
     Http.get 
@@ -285,12 +278,40 @@ settingsPost username playerTheme deviceTheme =
         , body = Http.jsonBody <| settingsEncoder username playerTheme deviceTheme
         , expect = Http.expectString GotSettingPostResponse
         }
--- settingsDecoder : JDecode.Decoder Settings 
--- settingsDecoder =
---     JDecode.map3 Settings  
---         (JDecode.field "username" JDecode.string)
---         (JDecode.field "playerTheme" JDecode.string)
---         (JDecode.field "deviceTheme" JDecode.string)
+
+settingsDecoder : JDecode.Decoder Settings 
+settingsDecoder =
+    JDecode.map3 Settings  
+        (JDecode.field "username" JDecode.string)
+        (JDecode.field "playerTheme" decodeColorThemeType)
+        (JDecode.field "deviceTheme" decodeColorThemeType)
+
+decodeColorThemeType : JDecode.Decoder ColorTheme   
+decodeColorThemeType = 
+    JDecode.int |> JDecode.andThen (\colorThemeTypeString ->
+        case colorThemeTypeString of 
+            1 -> JDecode.succeed Theme1 
+            2 -> JDecode.succeed Theme2 
+            3 -> JDecode.succeed Theme3 
+            4 -> JDecode.succeed Theme4 
+            5 -> JDecode.succeed Theme5 
+            _ -> JDecode.succeed Theme1
+    )
+
+-- getSettings : Cmd Msg 
+-- getSettings = 
+--     Http.get 
+--         { url = rootUrl ++ "getsettings/"
+--         , expect = Http.expectJson GetSettings settingsDecoder
+--         }
+
+getSettings : Model -> Cmd Msg
+getSettings model =
+    Http.post
+        { url = rootUrl ++ "getsettings/"
+        , body = Http.jsonBody <| userPassEncoder model
+        , expect = Http.expectJson GetSettings settingsDecoder
+        }
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --<<Init>>
@@ -315,7 +336,7 @@ init flags url key =
 
 --<<Update>>
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model = case msg of
+update msg model = case Debug.log "msg" msg of
         Tick time (keyToState,(arrowX,arrowY),(wasdX,wasdY)) -> 
             let player1_jumpState = 
                     case keyToState (Key "q") of 
@@ -516,21 +537,14 @@ update msg model = case msg of
         GetUserInfo result -> 
             case result of
                 Ok newModel ->
-                        let
-                            newUserInfo = newModel
-                        in
-                            ( { model | userinfo = newModel}, Cmd.none )
-
+                    ( { model | userinfo = newModel}, getSettings model)
                 Err error ->
                     ( handleError model error, Cmd.none )
 
         GetOverallHighscore result-> 
             case result of 
                 Ok newModel -> 
-                    let 
-                        newOverallHighscore = newModel
-                    in 
-                        ( { model | overallHighscore = newOverallHighscore}, Cmd.none)
+                    ( { model | overallHighscore = newModel}, Cmd.none)
                 Err error ->    
                     ( handleError model error, Cmd.none)
 
@@ -550,12 +564,20 @@ update msg model = case msg of
                 Err error ->
                     ( handleError model error, Cmd.none )
 
-
+        --Settings
         GotSettingPostResponse result -> 
             case result of 
                 Ok _ -> (model, Cmd.none)
                 Err error ->
                     (handleError model error, Cmd.none)
+
+        GetSettings result ->
+            case result of 
+                Ok newModel ->
+                    ( {model | settings = newModel }, Cmd.none)
+                Err error -> 
+                    ( handleError model error, Cmd.none)
+                    
 
 
         ToGame -> ({model | screen = Game Start}, Cmd.none)

@@ -9658,9 +9658,40 @@ var author$project$Main$getProjectile = F3(
 			2));
 		return (elm$core$Basics$tan(angle) * x) - (blob * A2(elm$core$Basics$pow, x, 2));
 	});
-var author$project$Main$GetUserInfo = function (a) {
-	return {$: 'GetUserInfo', a: a};
+var author$project$Main$GetSettings = function (a) {
+	return {$: 'GetSettings', a: a};
 };
+var author$project$Main$Settings = F3(
+	function (username, playerTheme, deviceTheme) {
+		return {deviceTheme: deviceTheme, playerTheme: playerTheme, username: username};
+	});
+var elm$json$Json$Decode$andThen = _Json_andThen;
+var author$project$Main$decodeColorThemeType = A2(
+	elm$json$Json$Decode$andThen,
+	function (colorThemeTypeString) {
+		switch (colorThemeTypeString) {
+			case 1:
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme1);
+			case 2:
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme2);
+			case 3:
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme3);
+			case 4:
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme4);
+			case 5:
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme5);
+			default:
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme1);
+		}
+	},
+	elm$json$Json$Decode$int);
+var elm$json$Json$Decode$map3 = _Json_map3;
+var author$project$Main$settingsDecoder = A4(
+	elm$json$Json$Decode$map3,
+	author$project$Main$Settings,
+	A2(elm$json$Json$Decode$field, 'username', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'playerTheme', author$project$Main$decodeColorThemeType),
+	A2(elm$json$Json$Decode$field, 'deviceTheme', author$project$Main$decodeColorThemeType));
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -9696,6 +9727,18 @@ var elm$http$Http$jsonBody = function (value) {
 var elm$http$Http$post = function (r) {
 	return elm$http$Http$request(
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
+};
+var author$project$Main$getSettings = function (model) {
+	return elm$http$Http$post(
+		{
+			body: elm$http$Http$jsonBody(
+				author$project$Main$userPassEncoder(model)),
+			expect: A2(elm$http$Http$expectJson, author$project$Main$GetSettings, author$project$Main$settingsDecoder),
+			url: author$project$Main$rootUrl + 'getsettings/'
+		});
+};
+var author$project$Main$GetUserInfo = function (a) {
+	return {$: 'GetUserInfo', a: a};
 };
 var author$project$Main$getUserInfo = function (model) {
 	return elm$http$Http$post(
@@ -9889,12 +9932,14 @@ var author$project$Main$updatePos = F2(
 		var d = _n1.b;
 		return _Utils_Tuple2(a + c, d);
 	});
+var elm$core$Debug$log = _Debug_log;
 var author$project$Main$update = F2(
 	function (msg, model) {
-		switch (msg.$) {
+		var _n0 = A2(elm$core$Debug$log, 'msg', msg);
+		switch (_n0.$) {
 			case 'Tick':
-				var time = msg.a;
-				var _n1 = msg.b;
+				var time = _n0.a;
+				var _n1 = _n0.b;
 				var keyToState = _n1.a;
 				var _n2 = _n1.b;
 				var arrowX = _n2.a;
@@ -10066,13 +10111,13 @@ var author$project$Main$update = F2(
 					}
 				}
 			case 'MakeRequest':
-				var req = msg.a;
+				var req = _n0.a;
 				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 			case 'UrlChange':
-				var url = msg.a;
+				var url = _n0.a;
 				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 			case 'DecideBigPlayer':
-				var player = msg.a;
+				var player = _n0.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -10173,7 +10218,7 @@ var author$project$Main$update = F2(
 						{credentials: newCredentials, screen: author$project$Main$Login}),
 					elm$core$Platform$Cmd$none);
 			case 'Username':
-				var newUsername = msg.a;
+				var newUsername = _n0.a;
 				var oldUserInfo = model.userinfo;
 				var oldSettings = model.settings;
 				var oldCredentials = model.credentials;
@@ -10192,7 +10237,7 @@ var author$project$Main$update = F2(
 						{credentials: newCredentials, settings: newSettings, userinfo: newUserInfo}),
 					elm$core$Platform$Cmd$none);
 			case 'Password':
-				var newPassword = msg.a;
+				var newPassword = _n0.a;
 				var oldCredentials = model.credentials;
 				var newCredentials = _Utils_update(
 					oldCredentials,
@@ -10203,7 +10248,7 @@ var author$project$Main$update = F2(
 						{credentials: newCredentials}),
 					elm$core$Platform$Cmd$none);
 			case 'GotHighscoreResponse':
-				var result = msg.a;
+				var result = _n0.a;
 				if (result.$ === 'Ok') {
 					return _Utils_Tuple2(model, author$project$Main$getOverallHighscore);
 				} else {
@@ -10213,15 +10258,14 @@ var author$project$Main$update = F2(
 						elm$core$Platform$Cmd$none);
 				}
 			case 'GetUserInfo':
-				var result = msg.a;
+				var result = _n0.a;
 				if (result.$ === 'Ok') {
 					var newModel = result.a;
-					var newUserInfo = newModel;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{userinfo: newModel}),
-						elm$core$Platform$Cmd$none);
+						author$project$Main$getSettings(model));
 				} else {
 					var error = result.a;
 					return _Utils_Tuple2(
@@ -10229,14 +10273,13 @@ var author$project$Main$update = F2(
 						elm$core$Platform$Cmd$none);
 				}
 			case 'GetOverallHighscore':
-				var result = msg.a;
+				var result = _n0.a;
 				if (result.$ === 'Ok') {
 					var newModel = result.a;
-					var newOverallHighscore = newModel;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{overallHighscore: newOverallHighscore}),
+							{overallHighscore: newModel}),
 						elm$core$Platform$Cmd$none);
 				} else {
 					var error = result.a;
@@ -10245,7 +10288,7 @@ var author$project$Main$update = F2(
 						elm$core$Platform$Cmd$none);
 				}
 			case 'GotLoginResponse':
-				var result = msg.a;
+				var result = _n0.a;
 				if (result.$ === 'Ok') {
 					switch (result.a) {
 						case 'LoginFailed':
@@ -10284,9 +10327,24 @@ var author$project$Main$update = F2(
 						elm$core$Platform$Cmd$none);
 				}
 			case 'GotSettingPostResponse':
-				var result = msg.a;
+				var result = _n0.a;
 				if (result.$ === 'Ok') {
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				} else {
+					var error = result.a;
+					return _Utils_Tuple2(
+						A2(author$project$Main$handleError, model, error),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'GetSettings':
+				var result = _n0.a;
+				if (result.$ === 'Ok') {
+					var newModel = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{settings: newModel}),
+						elm$core$Platform$Cmd$none);
 				} else {
 					var error = result.a;
 					return _Utils_Tuple2(
@@ -10825,24 +10883,24 @@ var author$project$Main$colorThemeToDeviceColor = function (colorTheme) {
 	switch (colorTheme.$) {
 		case 'Theme1':
 			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 154, 157, 170),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 212, 53, 79));
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 42, 54, 82),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 211, 224, 247));
 		case 'Theme2':
 			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 38, 54, 98),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 212, 53, 79));
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 215, 243, 110),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 227, 52, 82));
 		case 'Theme3':
 			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 156, 213, 190),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 38, 54, 98));
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 38, 54, 98),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 156, 213, 190));
 		case 'Theme4':
 			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 39, 62, 72),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 178, 187, 57));
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 230, 25, 75),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 223, 220, 234));
 		default:
 			return _Utils_Tuple2(
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 83, 113, 74),
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 171, 197, 99));
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 73, 105, 72),
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 229, 232, 151));
 	}
 };
 var author$project$Main$colorThemeToPlayerColor = function (colorTheme) {
