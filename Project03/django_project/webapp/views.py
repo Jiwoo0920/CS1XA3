@@ -101,11 +101,11 @@ def sign_up(request):
 	passw = json_req.get('password','')
 	if uname != '' and passw != '':
 		user = User.objects.create_user(username=uname, password=passw)
-		userinfo = UserInfo.objects.create(user=user,highscore=0,playerTheme='1',deviceTheme='1')
+		userinfo = UserInfo.objects.create(user=user,highscore=0,playerTheme='1',deviceTheme='1',gamesPlayed=0)
 		user.save()
 		userinfo.save()
 		login(request,user)
-		return HttpResponse('SignupSuccess')
+		return HttpResponse('SignupSuccess') 
 	else:
 		return HttpResponse('SignupFail')
 

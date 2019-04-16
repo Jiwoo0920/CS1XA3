@@ -10328,23 +10328,30 @@ var author$project$Main$update = F2(
 			case 'GotSignupResponse':
 				var result = _n0.a;
 				if (result.$ === 'Ok') {
-					if (result.a === 'SignupFail') {
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{error: 'Invalid Username/Password'}),
-							elm$core$Platform$Cmd$none);
-					} else {
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									error: '',
-									player1_pos: _Utils_Tuple2(-30, -10),
-									player2_pos: _Utils_Tuple2(30, -10),
-									screen: author$project$Main$Game(author$project$Main$Start)
-								}),
-							elm$core$Platform$Cmd$none);
+					switch (result.a) {
+						case 'SignupFail':
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{error: 'Invalid Username/Password'}),
+								elm$core$Platform$Cmd$none);
+						case 'UserAlreadyExists':
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{error: 'User Already Exists! Try Again.'}),
+								elm$core$Platform$Cmd$none);
+						default:
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										error: '',
+										player1_pos: _Utils_Tuple2(-30, -10),
+										player2_pos: _Utils_Tuple2(30, -10),
+										screen: author$project$Main$Game(author$project$Main$Start)
+									}),
+								elm$core$Platform$Cmd$none);
 					}
 				} else {
 					var error = result.a;
