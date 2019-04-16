@@ -9742,7 +9742,7 @@ var author$project$Main$highscorePost = F2(
 				body: elm$http$Http$jsonBody(
 					A2(author$project$Main$highscoreEncoder, username, highscore)),
 				expect: elm$http$Http$expectString(author$project$Main$GotHighscoreResponse),
-				url: author$project$Main$rootUrl + 'gethighscore/'
+				url: author$project$Main$rootUrl + 'postuserhighscore/'
 			});
 	});
 var elm$core$Basics$abs = function (n) {
@@ -9863,7 +9863,8 @@ var author$project$Main$loginCmdMsg = function (model) {
 		_List_fromArray(
 			[
 				author$project$Main$getUserInfo(model),
-				author$project$Main$getSettings(model)
+				author$project$Main$getSettings(model),
+				author$project$Main$getOverallHighscore
 			]));
 };
 var author$project$Main$GotLoginResponse = function (a) {
@@ -10350,13 +10351,13 @@ var author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{credentials: newCredentials, screen: author$project$Main$Login, settings: newSettings, userinfo: newUserInfo}),
-							elm$core$Platform$Cmd$none);
+							A2(author$project$Main$highscorePost, 'aaaa', 10));
 					} else {
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
 								{error: 'something happened'}),
-							elm$core$Platform$Cmd$none);
+							A2(author$project$Main$highscorePost, 'aaaa', 10));
 					}
 				} else {
 					var error = result.a;

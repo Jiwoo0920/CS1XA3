@@ -243,7 +243,7 @@ highscoreEncoder username highscore =
 highscorePost : String -> Int -> Cmd Msg
 highscorePost username highscore =
     Http.post
-        { url = rootUrl ++ "gethighscore/"
+        { url = rootUrl ++ "postuserhighscore/"
         , body = Http.jsonBody <| highscoreEncoder username highscore
         , expect = Http.expectString GotHighscoreResponse  
         }
@@ -316,8 +316,8 @@ getSettings model =
 
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-loginCmdMsg model = Cmd.batch [ getUserInfo model, getSettings model]
-gameEndCmdMosg model = Cmd.batch [highscorePost model.userinfo.username model.points]
+loginCmdMsg model = Cmd.batch [ getUserInfo model, getSettings model, getOverallHighscore]
+-- gameEndCmdMosg model = Cmd.batch [highscorePost model.userinfo.username model.points]
 
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
@@ -571,8 +571,8 @@ update msg model = case Debug.log "msg" msg of
                         oldSettings = model.settings   
                         newSettings = {oldSettings | username = "", playerTheme = Theme1, deviceTheme = Theme1}
                     in
-                        ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings}, Cmd.none) --TODO: update logout post!!
-                Ok _ -> ( {model | error = "something happened"}, Cmd.none)
+                        ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings}, highscorePost "aaaa" 10) --TODO: update logout post!!
+                Ok _ -> ( {model | error = "something happened"}, highscorePost "aaaa" 10)
                 Err error ->
                     ( handleError model error, Cmd.none)
 
