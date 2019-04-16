@@ -32,6 +32,7 @@ type Msg = Tick Float GetKeyState
          | SignUpPost
          | GoBack
          | GotLoginResponse (Result Http.Error String) 
+         | GotSignupResponse (Result Http.Error String) 
          | GotLogoutResponse (Result Http.Error String) 
          | GotHighscoreResponse (Result Http.Error String) 
          | Username String
@@ -41,6 +42,7 @@ type Msg = Tick Float GetKeyState
          | ToGame
          | GotSettingPostResponse (Result Http.Error String) 
          | GetSettings (Result Http.Error Settings)
+         | UpdateGamesPlayed (Result Http.Error String) 
 
 
 type Player = Player1 | Player2 | None
@@ -183,15 +185,6 @@ colorThemeToString colorTheme =
                 Theme4 -> "4" 
                 Theme5 -> "5"
 
-stringToColorTheme : String -> ColorTheme 
-stringToColorTheme string =
-    case string of  
-        "1" -> Theme1 
-        "2" -> Theme2 
-        "3" -> Theme3 
-        "4" -> Theme4 
-        "5" -> Theme5
-        _ -> Theme1
 
 --textOutline (to avoid repetition)
 textOutline : String -> Float -> Shape userMsg
@@ -229,7 +222,7 @@ signupPost model =
     Http.post
         { url = rootUrl ++ "signup/"
         , body = Http.jsonBody <| userPassEncoder model
-        , expect = Http.expectString GotLoginResponse
+        , expect = Http.expectString GotSignupResponse
         }
 
 --HIGHSCORE
@@ -314,6 +307,12 @@ getSettings model =
         , expect = Http.expectJson GetSettings settingsDecoder
         }
 
+updateGamesPlayed : Cmd Msg
+updateGamesPlayed =
+    Http.get
+        { url = rootUrl ++ "updategamesplayed/"
+        , expect = Http.expectString UpdateGamesPlayed
+        }
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 loginCmdMsg model = Cmd.batch [ getUserInfo model, getSettings model, getOverallHighscore]
@@ -335,7 +334,6 @@ init flags url key =
                 , userinfo= {username = "", highscore = 0}
                 , overallHighscore = {username = "", highscore = 0}
                 , settings = {username = "", playerTheme = Theme1, deviceTheme = Theme1 }
-                
                 }   
     in ( model , randDecideSize) -- add init model
 
@@ -397,7 +395,7 @@ update msg model = case Debug.log "msg" msg of
             in --CASE 1) if game over and player presses spacebar to restart
                 if model.screen == Login || model.screen == SignUp then (model,Cmd.none)
                 else if model.screen == Game Start  && restart == False then (model,Cmd.none)
-                else if restart && (model.screen == Game End || model.screen == Game Start) then (restartModel, randDecideSize)
+                else if restart && (model.screen == Game End || model.screen == Game Start) then (restartModel, Cmd.batch[randDecideSize, updateGamesPlayed])
                 --CASE 2)if there's a collision, end game 
                 else if isCollision model then 
                     let
@@ -492,7 +490,7 @@ update msg model = case Debug.log "msg" msg of
                 oldCredentials= model.credentials
                 newCredentials = { oldCredentials | username = "", password = ""}
             in
-                ({model | credentials = newCredentials, screen = SignUp}, Cmd.none)
+                ({model | credentials = newCredentials, screen = SignUp, error = ""}, Cmd.none)
 
         SignUpPost -> (model,signupPost model)
 
@@ -501,7 +499,7 @@ update msg model = case Debug.log "msg" msg of
                 oldCredentials= model.credentials
                 newCredentials= { oldCredentials | username = "", password = ""}
             in
-                ({model | credentials = newCredentials, screen = Login}, Cmd.none) 
+                ({model | credentials = newCredentials, screen = Login, error = ""}, Cmd.none) 
         --Update username and password on user input
         Username newUsername -> 
             let
@@ -550,15 +548,25 @@ update msg model = case Debug.log "msg" msg of
         GotLoginResponse result ->
             case result of
                 Ok "LoginFailed" ->
-                   ( { model | error = "Login Failed"}, Cmd.none)
-                Ok "SignupSuccess" -> 
-                    ( {model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10) }, Cmd.none)
+                   ( { model | error = "Incorrect Username/Password"}, Cmd.none)
                 Ok "LoggedIn" ->
-                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10) }, loginCmdMsg model)
+                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, loginCmdMsg model)
                 Ok _ -> 
                     (model, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none )
+
+        GotSignupResponse result ->
+            case result of 
+                Ok "SignupFail" ->  
+                    ({ model | error = "Invalid Username/Password"}, Cmd.none)
+                Ok "UserAlreadyExists" ->
+                    ({ model | error = "User Already Exists! Try Again."}, Cmd.none)
+                Ok _ ->
+                    ( {model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, Cmd.none)
+                Err error ->
+                    ( handleError model error, Cmd.none )
+
 
         GotLogoutResponse result ->
             case result of 
@@ -571,8 +579,8 @@ update msg model = case Debug.log "msg" msg of
                         oldSettings = model.settings   
                         newSettings = {oldSettings | username = "", playerTheme = Theme1, deviceTheme = Theme1}
                     in
-                        ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings}, highscorePost "aaaa" 10) --TODO: update logout post!!
-                Ok _ -> ( {model | error = "something happened"}, highscorePost "aaaa" 10)
+                        ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings, error = ""}, Cmd.none) --TODO: update logout post!!
+                Ok _ -> ( {model | error = "something happened"}, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none)
 
@@ -591,6 +599,11 @@ update msg model = case Debug.log "msg" msg of
                 Err error -> 
                     ( handleError model error, Cmd.none)
                     
+        UpdateGamesPlayed result ->
+            case result of 
+                Ok _ -> (model, Cmd.none)
+                Err error -> 
+                    ( handleError model error, Cmd.none)
 
 
         ToGame -> ({model | screen = Game Start}, Cmd.none)
@@ -630,8 +643,9 @@ view model =
                     , passwordBox
                     , loginButton
                     , gotoSignUpButton
-                    ,usertest
+                    , usertest
                     , togame
+                    , errorMessage
                     ]
                 SignUp -> 
                     [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username] [])
@@ -644,6 +658,7 @@ view model =
                     , signUpButton
                     , goBackButton
                     , usertest
+                    , errorMessage
                     ]
                 Game _ ->
                     [ gamebody, background, caption, points, startText, gameOver, overallHighscore, floor, player1, player2, logoutButton, themeButtons ] 
@@ -652,6 +667,14 @@ view model =
             |> notifyTap ToGame 
         usertest = textOutline (model.credentials.username ++ "/" ++ model.credentials.password) 4
             |> move (0,-40)
+
+        errorMessage = GraphicSVG.text model.error
+            |> size 5
+            |> sansserif
+            |> bold 
+            |> filled red 
+            |> move (-39,-25) 
+
         --Screen: LOGIN
         loginTitle = textOutline "Login" 12
             |> move (-18,40)
@@ -787,13 +810,13 @@ view model =
 
         -- highScoreBoard = group [highScore, user, highscorePoints]
 
-        overallHighscore = group [highscoreShape, highScore, user, highscorePoints]
+        overallHighscore = group [highscoreShape, highScore, user, highscorePoints, gamesPlayed]
             |> move (3,-3)
 
-        highscoreShape = roundedRect 47 20 2
+        highscoreShape = roundedRect 47 33 2
             |> filled lightGrey
             |> addOutline (solid 0.7) black 
-            |> move (-24,-44)
+            |> move (-24,-50)
 
         highScore = textOutline ("Overall Highscore: " ++ String.fromInt model.overallHighscore.highscore) 4
             |> move (-45,-40)
@@ -802,7 +825,10 @@ view model =
             |> move (-45,-45)
 
         highscorePoints = textOutline ("Your highscore is: " ++ String.fromInt model.userinfo.highscore ) 3
-            |> move (-45,-50)
+            |> move (-45,-52)
+
+        gamesPlayed = textOutline ("# Games Played: ") 3
+            |> move (-45, -57)
 
         background = square 100
             |> filled (rgb 214 244 255)

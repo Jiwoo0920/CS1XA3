@@ -11454,7 +11454,7 @@ var author$project$Main$view = function (model) {
 							MacCASOutreach$graphicsvg$GraphicSVG$text('Instructions')))))));
 	var highscoreShape = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-24, -44),
+		_Utils_Tuple2(-24, -50),
 		A3(
 			MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
 			MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
@@ -11462,10 +11462,10 @@ var author$project$Main$view = function (model) {
 			A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
 				MacCASOutreach$graphicsvg$GraphicSVG$lightGrey,
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 47, 20, 2))));
+				A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 47, 33, 2))));
 	var highscorePoints = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-45, -50),
+		_Utils_Tuple2(-45, -52),
 		A2(
 			author$project$Main$textOutline,
 			'Your highscore is: ' + elm$core$String$fromInt(model.userinfo.highscore),
@@ -11477,12 +11477,6 @@ var author$project$Main$view = function (model) {
 			author$project$Main$textOutline,
 			'Overall Highscore: ' + elm$core$String$fromInt(model.overallHighscore.highscore),
 			4));
-	var overallHighscore = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(3, -3),
-		MacCASOutreach$graphicsvg$GraphicSVG$group(
-			_List_fromArray(
-				[highscoreShape, highScore, user, highscorePoints])));
 	var gotoSignUpText = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-10, -2),
@@ -11531,6 +11525,16 @@ var author$project$Main$view = function (model) {
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
 						[goBackShape, goBackText])))));
+	var gamesPlayed = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(-45, -57),
+		A2(author$project$Main$textOutline, '# Games Played: ', 3));
+	var overallHighscore = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(3, -3),
+		MacCASOutreach$graphicsvg$GraphicSVG$group(
+			_List_fromArray(
+				[highscoreShape, highScore, user, highscorePoints, gamesPlayed])));
 	var gamebody = A3(
 		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
 		MacCASOutreach$graphicsvg$GraphicSVG$solid(1),

@@ -14,7 +14,7 @@ from . models import UserInfo
 #    return HttpResponse("Counter = " + str(request.session['counter']))
 
 def post_user_highscore(request):
-	json_req = json.loads(request.body) #takes the request and turn to dictionary
+	json_req = json.loads(request.body.decode('utf-8')) #takes the request and turn to dictionary
 	#username = json_req.get('username','')
 	highscore = json_req.get('highscore',0)
 	user = request.user #User.objects.get(username=username)
@@ -106,6 +106,7 @@ def update_gamesPlayed(request):
 	else:
 		return HttpResponse("FailedToUpdateGamesPlayed")
 
+#need to fix bad status 500 error when user already exists
 def sign_up(request):
 	json_req = json.loads(request.body)
 	uname = json_req.get('username','')
