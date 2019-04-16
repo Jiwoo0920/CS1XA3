@@ -9932,12 +9932,15 @@ var author$project$Main$settingsPost = F3(
 				url: author$project$Main$rootUrl + 'updatesettings/'
 			});
 	});
+var author$project$Main$GotSignupResponse = function (a) {
+	return {$: 'GotSignupResponse', a: a};
+};
 var author$project$Main$signupPost = function (model) {
 	return elm$http$Http$post(
 		{
 			body: elm$http$Http$jsonBody(
 				author$project$Main$userPassEncoder(model)),
-			expect: elm$http$Http$expectString(author$project$Main$GotLoginResponse),
+			expect: elm$http$Http$expectString(author$project$Main$GotSignupResponse),
 			url: author$project$Main$rootUrl + 'signup/'
 		});
 };
@@ -10206,7 +10209,7 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{credentials: newCredentials, screen: author$project$Main$SignUp}),
+						{credentials: newCredentials, error: '', screen: author$project$Main$SignUp}),
 					elm$core$Platform$Cmd$none);
 			case 'SignUpPost':
 				return _Utils_Tuple2(
@@ -10220,7 +10223,7 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{credentials: newCredentials, screen: author$project$Main$Login}),
+						{credentials: newCredentials, error: '', screen: author$project$Main$Login}),
 					elm$core$Platform$Cmd$none);
 			case 'Username':
 				var newUsername = _n0.a;
@@ -10300,23 +10303,14 @@ var author$project$Main$update = F2(
 							return _Utils_Tuple2(
 								_Utils_update(
 									model,
-									{error: 'Login Failed'}),
-								elm$core$Platform$Cmd$none);
-						case 'SignupSuccess':
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{
-										player1_pos: _Utils_Tuple2(-30, -10),
-										player2_pos: _Utils_Tuple2(30, -10),
-										screen: author$project$Main$Game(author$project$Main$Start)
-									}),
+									{error: 'Incorrect Username/Password'}),
 								elm$core$Platform$Cmd$none);
 						case 'LoggedIn':
 							return _Utils_Tuple2(
 								_Utils_update(
 									model,
 									{
+										error: '',
 										player1_pos: _Utils_Tuple2(-30, -10),
 										player2_pos: _Utils_Tuple2(30, -10),
 										screen: author$project$Main$Game(author$project$Main$Start)
@@ -10324,6 +10318,33 @@ var author$project$Main$update = F2(
 								author$project$Main$loginCmdMsg(model));
 						default:
 							return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					}
+				} else {
+					var error = result.a;
+					return _Utils_Tuple2(
+						A2(author$project$Main$handleError, model, error),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'GotSignupResponse':
+				var result = _n0.a;
+				if (result.$ === 'Ok') {
+					if (result.a === 'SignupFail') {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{error: 'Invalid Username/Password'}),
+							elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									error: '',
+									player1_pos: _Utils_Tuple2(-30, -10),
+									player2_pos: _Utils_Tuple2(30, -10),
+									screen: author$project$Main$Game(author$project$Main$Start)
+								}),
+							elm$core$Platform$Cmd$none);
 					}
 				} else {
 					var error = result.a;
@@ -10350,14 +10371,14 @@ var author$project$Main$update = F2(
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
-								{credentials: newCredentials, screen: author$project$Main$Login, settings: newSettings, userinfo: newUserInfo}),
-							A2(author$project$Main$highscorePost, 'aaaa', 10));
+								{credentials: newCredentials, error: '', screen: author$project$Main$Login, settings: newSettings, userinfo: newUserInfo}),
+							elm$core$Platform$Cmd$none);
 					} else {
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
 								{error: 'something happened'}),
-							A2(author$project$Main$highscorePost, 'aaaa', 10));
+							elm$core$Platform$Cmd$none);
 					}
 				} else {
 					var error = result.a;
@@ -11530,6 +11551,18 @@ var author$project$Main$view = function (model) {
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 177, 227, 127),
 				A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 100, 20))));
+	var errorMessage = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(-39, -25),
+		A2(
+			MacCASOutreach$graphicsvg$GraphicSVG$filled,
+			MacCASOutreach$graphicsvg$GraphicSVG$red,
+			MacCASOutreach$graphicsvg$GraphicSVG$bold(
+				MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
+					A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$size,
+						5,
+						MacCASOutreach$graphicsvg$GraphicSVG$text(model.error))))));
 	var downTriangle = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$ChangeDeviceColorDown,
@@ -11611,7 +11644,8 @@ var author$project$Main$view = function (model) {
 						loginButton,
 						gotoSignUpButton,
 						usertest,
-						togame
+						togame,
+						errorMessage
 					]);
 			case 'SignUp':
 				return _List_fromArray(
@@ -11658,7 +11692,8 @@ var author$project$Main$view = function (model) {
 						passwordBox,
 						signUpButton,
 						goBackButton,
-						usertest
+						usertest,
+						errorMessage
 					]);
 			default:
 				return _List_fromArray(
