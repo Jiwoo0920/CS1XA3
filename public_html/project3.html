@@ -9944,6 +9944,14 @@ var author$project$Main$signupPost = function (model) {
 			url: author$project$Main$rootUrl + 'signup/'
 		});
 };
+var author$project$Main$UpdateGamesPlayed = function (a) {
+	return {$: 'UpdateGamesPlayed', a: a};
+};
+var author$project$Main$updateGamesPlayed = elm$http$Http$get(
+	{
+		expect: elm$http$Http$expectString(author$project$Main$UpdateGamesPlayed),
+		url: author$project$Main$rootUrl + 'updategamesplayed/'
+	});
 var author$project$Main$updatePos = F2(
 	function (_n0, _n1) {
 		var a = _n0.a;
@@ -10082,7 +10090,11 @@ var author$project$Main$update = F2(
 							author$project$Main$Game(author$project$Main$End)) || _Utils_eq(
 							model.screen,
 							author$project$Main$Game(author$project$Main$Start)))) {
-							return _Utils_Tuple2(restartModel, author$project$Main$randDecideSize);
+							return _Utils_Tuple2(
+								restartModel,
+								elm$core$Platform$Cmd$batch(
+									_List_fromArray(
+										[author$project$Main$randDecideSize, author$project$Main$updateGamesPlayed])));
 						} else {
 							if (author$project$Main$isCollision(model)) {
 								var oldUserInfo = model.userinfo;
@@ -10412,6 +10424,16 @@ var author$project$Main$update = F2(
 							model,
 							{settings: newModel}),
 						elm$core$Platform$Cmd$none);
+				} else {
+					var error = result.a;
+					return _Utils_Tuple2(
+						A2(author$project$Main$handleError, model, error),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'UpdateGamesPlayed':
+				var result = _n0.a;
+				if (result.$ === 'Ok') {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				} else {
 					var error = result.a;
 					return _Utils_Tuple2(

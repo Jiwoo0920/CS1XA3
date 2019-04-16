@@ -95,6 +95,17 @@ def get_settings(request):
 	else:
 		return HttpResponse("Error: Please login again")
 
+def update_gamesPlayed(request):
+	user = request.user
+	if user.is_authenticated:
+		userinfo = UserInfo.objects.get(user=user)
+		userinfo.gamesPlayed += 1
+		userinfo.save()
+		print("games played:"+str(userinfo.gamesPlayed))
+		return HttpResponse("UpdatedGamesPlayed")
+	else:
+		return HttpResponse("FailedToUpdateGamesPlayed")
+
 def sign_up(request):
 	json_req = json.loads(request.body)
 	uname = json_req.get('username','')
