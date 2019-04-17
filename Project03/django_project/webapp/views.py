@@ -53,7 +53,8 @@ def postUserInfo(request):
 		if highscore > userinfo.highscore:
 			userinfo.highscore = highscore
 		userinfo.gamesPlayed = gamesPlayed
-		userinfo.totalPoints +=points
+		userinfo.points = points
+		userinfo.totalPoints += points
 		userinfo.playerTheme = playerTheme
 		userinfo.deviceTheme = deviceTheme
 		userinfo.save()
@@ -69,7 +70,7 @@ def getUserInfo(request):
 		userhighscore = userinfo.highscore
 		respDict = {}
 		respDict['highscore'] = userinfo.highscore
-		respDict['points'] = 0
+		respDict['points'] = userinfo.points
 		respDict['avgPoints'] = round((userinfo.totalPoints/userinfo.gamesPlayed),5)
 		respDict['gamesPlayed'] = userinfo.gamesPlayed
 		respDict['playerTheme'] = userinfo.playerTheme
