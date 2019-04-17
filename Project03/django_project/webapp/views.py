@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 import json
 from . models import UserInfo
+from django.utils import timezone
 
 #Login/Signup
 def sign_up(request):
@@ -52,6 +53,7 @@ def postUserInfo(request):
 		userinfo = UserInfo.objects.get(user=user)
 		if highscore > userinfo.highscore:
 			userinfo.highscore = highscore
+			userinfo.updatedTime = timezone.now()
 		userinfo.gamesPlayed = gamesPlayed
 		userinfo.points = points
 		userinfo.totalPoints += points
@@ -94,7 +96,7 @@ def getOverallHighscore(request):
 
 
 def getLeaderBoard(request):
-	top5_UserInfo = UserInfo.objects.order_by('-highscore')[:5]
+	top5_UserInfo = UserInfo.objects.order_by('-highscore','updatedTime')[:5]
 	print("top5:"+str(top5_UserInfo))
 	respDict = {}
 	keys = ["firstPlace","secondPlace","thirdPlace","fourthPlace","fifthPlace"]
