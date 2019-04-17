@@ -16,6 +16,8 @@ class UserInfo(models.Model):
 	playerTheme = models.CharField(max_length=10,default='1')
 	deviceTheme = models.CharField(max_length=10,default='1')
 	gamesPlayed = models.IntegerField(default=0)
+	totalPoints = models.IntegerField(default=0)
+	averagePoints = models.FloatField(default=0.0)
 	objects = UserInfoManager()
 
 
