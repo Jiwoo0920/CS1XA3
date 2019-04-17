@@ -21,4 +21,4 @@ class UserInfo(models.Model):
 	averagePoints = models.FloatField(default=0.0)
 	objects = UserInfoManager()
 
-
+	

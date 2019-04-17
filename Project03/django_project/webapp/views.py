@@ -94,4 +94,16 @@ def getOverallHighscore(request):
 
 
 def getLeaderBoard(request):
-	pass
+	top5_UserInfo = UserInfo.objects.order_by('-highscore')[:5]
+	print("top5:"+str(top5_UserInfo))
+	respDict = {}
+	keys = ["firstPlace","secondPlace","thirdPlace","fourthPlace","fifthPlace"]
+	for i in range (len(top5_UserInfo)):
+		username = top5_UserInfo[i].user.username
+		highscore = top5_UserInfo[i].highscore
+		respDict[keys[i]] = {"username":username,"highscore":highscore}
+	if len(respDict) < 5:
+		for i in range (len(respDict),5):
+			respDict[keys[i]] = {"username":"---------","highscore":0}
+	print(str(respDict))
+	return JsonResponse(respDict)

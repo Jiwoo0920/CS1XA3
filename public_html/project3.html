@@ -9001,9 +9001,13 @@ var author$project$Main$changeThemeRight = function (colorTheme) {
 			return author$project$Main$Theme1;
 	}
 };
-var author$project$Main$GetOverallHighscore = function (a) {
-	return {$: 'GetOverallHighscore', a: a};
+var author$project$Main$GetLeaderBoard = function (a) {
+	return {$: 'GetLeaderBoard', a: a};
 };
+var author$project$Main$Ranking = F5(
+	function (firstPlace, secondPlace, thirdPlace, fourthPlace, fifthPlace) {
+		return {fifthPlace: fifthPlace, firstPlace: firstPlace, fourthPlace: fourthPlace, secondPlace: secondPlace, thirdPlace: thirdPlace};
+	});
 var author$project$Main$Highscore = F2(
 	function (username, highscore) {
 		return {highscore: highscore, username: username};
@@ -9014,6 +9018,15 @@ var author$project$Main$overallHighscoreDecoder = A3(
 	author$project$Main$Highscore,
 	A2(elm$json$Json$Decode$field, 'username', elm$json$Json$Decode$string),
 	A2(elm$json$Json$Decode$field, 'highscore', elm$json$Json$Decode$int));
+var elm$json$Json$Decode$map5 = _Json_map5;
+var author$project$Main$leaderBoardDecoder = A6(
+	elm$json$Json$Decode$map5,
+	author$project$Main$Ranking,
+	A2(elm$json$Json$Decode$field, 'firstPlace', author$project$Main$overallHighscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'secondPlace', author$project$Main$overallHighscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'thirdPlace', author$project$Main$overallHighscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'fourthPlace', author$project$Main$overallHighscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'fifthPlace', author$project$Main$overallHighscoreDecoder));
 var author$project$Main$rootUrl = 'https://mac1xa3.ca/e/leej229/';
 var elm$core$Result$mapError = F2(
 	function (f, result) {
@@ -9650,6 +9663,14 @@ var elm$http$Http$get = function (r) {
 	return elm$http$Http$request(
 		{body: elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
+var author$project$Main$getLeaderBoard = elm$http$Http$get(
+	{
+		expect: A2(elm$http$Http$expectJson, author$project$Main$GetLeaderBoard, author$project$Main$leaderBoardDecoder),
+		url: author$project$Main$rootUrl + 'getleaderboard/'
+	});
+var author$project$Main$GetOverallHighscore = function (a) {
+	return {$: 'GetOverallHighscore', a: a};
+};
 var author$project$Main$getOverallHighscore = elm$http$Http$get(
 	{
 		expect: A2(elm$http$Http$expectJson, author$project$Main$GetOverallHighscore, author$project$Main$overallHighscoreDecoder),
@@ -10252,7 +10273,7 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{screen: author$project$Main$LeaderBoard}),
-					elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					author$project$Main$getLeaderBoard) : _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 			case 'GoBackToGame':
 				return _Utils_eq(model.screen, author$project$Main$LeaderBoard) ? _Utils_Tuple2(
 					_Utils_update(
@@ -10312,6 +10333,21 @@ var author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{overallHighscore: newModel}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					var error = result.a;
+					return _Utils_Tuple2(
+						A2(author$project$Main$handleError, model, error),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'GetLeaderBoard':
+				var result = _n0.a;
+				if (result.$ === 'Ok') {
+					var newModel = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{leaderBoard: newModel}),
 						elm$core$Platform$Cmd$none);
 				} else {
 					var error = result.a;
