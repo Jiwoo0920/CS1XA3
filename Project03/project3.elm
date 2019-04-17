@@ -27,6 +27,8 @@ type Msg = Tick Float GetKeyState
          | SignUpPost
          | LogoutPost
          | GotoSignUpScreen
+         | GotoLeaderBoardScreen
+         | GoBackToGame
          | GoBack
          | GotLoginResponse (Result Http.Error String) 
          | GotSignupResponse (Result Http.Error String) 
@@ -45,7 +47,7 @@ type State = Jump | NotJump
 
 type GameStatus = Start | InProgress | End
 
-type Screen = Login | SignUp | Game GameStatus 
+type Screen = Login | SignUp | Game GameStatus | LeaderBoard
 
 type ColorTheme = Theme1 | Theme2 | Theme3 | Theme4 | Theme5 
 
@@ -363,7 +365,7 @@ update msg model = case Debug.log "msg" msg of
                                     , userinfo = newUserInfo}
 
             in --CASE 1) if game over and player presses spacebar to restart
-                if model.screen == Login || model.screen == SignUp then (model,Cmd.none)
+                if model.screen == Login || model.screen == SignUp || model.screen == LeaderBoard then (model,Cmd.none)
                 else if model.screen == Game Start  && restart == False then (model,Cmd.none)
                 else if restart && (model.screen == Game End || model.screen == Game Start) then 
                     let
@@ -455,20 +457,24 @@ update msg model = case Debug.log "msg" msg of
         LogoutPost -> (model, logoutPost)
         
         GotoSignUpScreen -> 
-            let
-                oldCredentials= model.credentials
+            let oldCredentials= model.credentials
                 newCredentials = { oldCredentials | username = "", password = ""}
-            in
-                ({model | credentials = newCredentials, screen = SignUp, error = ""}, Cmd.none)
+            in ({model | credentials = newCredentials, screen = SignUp, error = ""}, Cmd.none)
 
-        SignUpPost -> (model,signupPost model)
+        GotoLeaderBoardScreen ->
+            if member model.screen [Game Start, Game End] then ({model | screen = LeaderBoard}, Cmd.none)
+            else (model, Cmd.none)
+
+        GoBackToGame ->
+            if model.screen == LeaderBoard then ({model | screen = Game Start}, Cmd.none)
+            else (model, Cmd.none)
+
+        SignUpPost -> (model,signupPost model) 
 
         GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
-            let
-                oldCredentials= model.credentials
+            let oldCredentials= model.credentials
                 newCredentials= { oldCredentials | username = "", password = ""}
-            in
-                ({model | credentials = newCredentials, screen = Login, error = ""}, Cmd.none) 
+            in ({model | credentials = newCredentials, screen = Login, error = ""}, Cmd.none) 
         --Update username and password on user input
         Username newUsername -> 
             let
@@ -478,11 +484,9 @@ update msg model = case Debug.log "msg" msg of
                 ({model | credentials = newCredentials}, Cmd.none)
 
         Password newPassword ->
-            let
-                oldCredentials = model.credentials
+            let oldCredentials = model.credentials
                 newCredentials = { oldCredentials | password = newPassword}
-            in
-                ({model | credentials = newCredentials}, Cmd.none)
+            in ({model | credentials = newCredentials}, Cmd.none)
 
         --SERVER 
         PostUserInfo result ->
@@ -606,8 +610,10 @@ view model =
                     , errorMessage
                     ]
                 Game _ ->
-                    [ gamebody, background, caption, points, startText, gameOver, overallHighscore, floor, player1, player2, logoutButton, themeButtons ] 
+                    [ gamebody, background, caption, points, startText, gameOver, overallHighscore, floor,username, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
 
+                LeaderBoard -> 
+                    [ gamebody, background, caption, overallHighscore, floor,username, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
 
 
         togame = square 5
@@ -709,6 +715,9 @@ view model =
             |> size 4
             |> (if model.screen == Game Start then filled blank else filled black)
             |> move (-7,47)
+        
+        username = textOutline ("User: " ++ model.credentials.username) 4
+            |> move (-46,-30)
 
         startText = group [gameStart, instructions1, instructions2, instructions3, instructions4]
             |> move (0,4)
@@ -757,6 +766,29 @@ view model =
             |> move (-46,35)
 
         -- highScoreBoard = group [highScore, user, highscorePoints]
+        showLeaderBoardButton = group [showLeaderBoardShape, showLeaderBoardText]
+            |> move (13,-45)
+            |> notifyTap GotoLeaderBoardScreen
+
+        showLeaderBoardShape = roundedRect 9 9 2
+            |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))
+            |> addOutline (solid 0.7) black 
+        
+        showLeaderBoardText = textOutline "L" 8
+            |> move (-2.5,-2.5)
+
+        --Go back button
+        goBackToGameButton = group [goBackToGameShape, goBackToGameText]
+            |> move (13,-56)
+            |> notifyTap GoBackToGame
+
+        goBackToGameShape = roundedRect 9 9 2
+            |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))
+            |> addOutline (solid 0.7) black 
+        
+        goBackToGameText = textOutline "B" 8
+            |> move (-3,-3)
+
 
         overallHighscore = group [highscoreShape, highScore, user, highscorePoints, gamesPlayed, avgPoints]
             |> move (3,-3)
@@ -865,7 +897,7 @@ view model =
                             -- LeftButton
                             , circle 4 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme))) |> addOutline(solid 0.7) black  |> move (21,-48) |> notifyTap (ChangeColorTheme ThemeLeft)
                             , triangle 2 |> filled black |> mirrorX |> move (21,-48) |> notifyTap (ChangeColorTheme ThemeLeft)
-                            ]
+                            ] |> move (6,0)
 
         --logout
         logoutButton = group [logoutShape,logoutText]
