@@ -37,7 +37,7 @@ type Msg = Tick Float GetKeyState
          | Password String
          | PostUserInfo (Result Http.Error String) 
          | GetUserInfo (Result Http.Error UserInfo)
-         | GetOverallHighscore (Result Http.Error OverallHighscore)
+         | GetOverallHighscore (Result Http.Error Highscore)
          | ToGame
 
 
@@ -64,7 +64,8 @@ type alias Model = { screen : Screen
                    , credentials : Credentials
                    , userinfo : UserInfo       
                    , gameEnd : Bool
-                   , overallHighscore : OverallHighscore
+                   , overallHighscore : Highscore
+                   , leaderBoard : Ranking
                    } 
 
 --Need for server
@@ -72,8 +73,16 @@ type alias Credentials = { username : String
                          , password : String
                          }
 
-type alias OverallHighscore = { username : String
-                           , highscore : Int}
+type alias Highscore = { username : String
+                       , highscore : Int
+                       }
+
+type alias Ranking = { firstPlace : Highscore
+                     , secondPlace : Highscore 
+                     , thirdPlace : Highscore 
+                     , fourthPlace : Highscore 
+                     , fifthPlace : Highscore
+                     }
 
 type alias UserInfo = { highscore : Int
                       , points : Int
@@ -289,11 +298,16 @@ getOverallHighscore =
         , expect = Http.expectJson GetOverallHighscore overallHighscoreDecoder
         }
 
-overallHighscoreDecoder : JDecode.Decoder OverallHighscore 
+overallHighscoreDecoder : JDecode.Decoder Highscore 
 overallHighscoreDecoder = 
-    JDecode.map2 OverallHighscore 
+    JDecode.map2 Highscore 
         (JDecode.field "username" JDecode.string)
         (JDecode.field "highscore" JDecode.int)
+
+-- leaderBoardDecoder : JDecode.Decoder Ranking 
+-- leaderBoardDecoder =
+--     JDecode.map5 Ranking 
+--         (JDecode.field "firstPlace" JDecode)
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 loginCmdMsg model = Cmd.batch [ getUserInfo model, getOverallHighscore]
@@ -314,6 +328,11 @@ init flags url key =
                 , credentials = {username = "", password = ""}
                 , userinfo= {highscore = 0, points = 0, avgPoints = 0.0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
                 , overallHighscore = {username = "", highscore = 0}
+                , leaderBoard = { firstPlace = {username = "---------", highscore = 0}
+                                , secondPlace ={username = "---------", highscore = 0}
+                                , thirdPlace = {username = "---------", highscore = 0}
+                                , fourthPlace = {username = "---------", highscore = 0}
+                                , fifthPlace = {username = "---------", highscore = 0}}
                 }   
     in ( model , randDecideSize) -- add init model
 
@@ -368,8 +387,7 @@ update msg model = case Debug.log "msg" msg of
                 if model.screen == Login || model.screen == SignUp || model.screen == LeaderBoard then (model,Cmd.none)
                 else if model.screen == Game Start  && restart == False then (model,Cmd.none)
                 else if restart && (model.screen == Game End || model.screen == Game Start) then 
-                    let
-                        oldUserInfo = model.userinfo 
+                    let oldUserInfo = model.userinfo 
                         newUserInfo = { oldUserInfo | gamesPlayed = model.userinfo.gamesPlayed + 1, points = 0}
                         newModel = { model | player1_pos = (-114,-10)
                                     , player2_pos = (114,-10) 
@@ -383,13 +401,11 @@ update msg model = case Debug.log "msg" msg of
                     in (newModel, randDecideSize)
                 --CASE 2)if there's a collision, end game 
                 else if isCollision model then 
-                    let
-                        newHighscore = if model.userinfo.points > model.userinfo.highscore then model.userinfo.points else model.userinfo.highscore 
+                    let newHighscore = if model.userinfo.points > model.userinfo.highscore then model.userinfo.points else model.userinfo.highscore 
                         oldUserInfo = model.userinfo
                         newUserInfo= { oldUserInfo | highscore = newHighscore}
                         newModel = {model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo, gameEnd=True }
-                    in
-                        if model.gameEnd == True then
+                    in if model.gameEnd == True then
                             (model,Cmd.none)
                         else
                             (newModel, postUserInfo newModel) --sendHighscore model 
@@ -430,17 +446,16 @@ update msg model = case Debug.log "msg" msg of
         MakeRequest req    -> (model, Cmd.none)
         UrlChange url      -> (model, Cmd.none)
 
-        DecideBigPlayer player -> ({model | bigPlayer = player}, Cmd.none) --where to put getoverall highscore lol NOTE!!
+        DecideBigPlayer player -> ({model | bigPlayer = player}, Cmd.none) 
 
-        ChangeColorTheme button -> --ChangeColorThemeRight # case sdgadsg of asgsadgd do asdgasgs
+        ChangeColorTheme button -> 
                 let newTheme = 
                         case button of
                             ThemeUp -> changeThemeRight model.userinfo.deviceTheme
                             ThemeDown -> changeThemeLeft model.userinfo.deviceTheme
                             ThemeRight -> changeThemeRight model.userinfo.playerTheme
                             ThemeLeft -> changeThemeLeft model.userinfo.playerTheme
-                in 
-                    if member button [ThemeUp, ThemeDown] then
+                in if member button [ThemeUp, ThemeDown] then
                         let oldUserInfo = model.userinfo
                             newUserInfo = {oldUserInfo | deviceTheme = newTheme}
                             newModel = {model | userinfo = newUserInfo}
@@ -451,7 +466,7 @@ update msg model = case Debug.log "msg" msg of
                             newModel = {model | userinfo = newUserInfo}
                         in (newModel, postUserInfo newModel)
 
-        --Login
+        --Screen:  LOGIN
         LoginPost -> (model, loginPost model) --log in button
 
         LogoutPost -> (model, logoutPost)
@@ -461,20 +476,15 @@ update msg model = case Debug.log "msg" msg of
                 newCredentials = { oldCredentials | username = "", password = ""}
             in ({model | credentials = newCredentials, screen = SignUp, error = ""}, Cmd.none)
 
-        GotoLeaderBoardScreen ->
-            if member model.screen [Game Start, Game End] then ({model | screen = LeaderBoard}, Cmd.none)
-            else (model, Cmd.none)
-
-        GoBackToGame ->
-            if model.screen == LeaderBoard then ({model | screen = Game Start}, Cmd.none)
-            else (model, Cmd.none)
-
+        --Screen: SignUp
         SignUpPost -> (model,signupPost model) 
 
         GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
             let oldCredentials= model.credentials
                 newCredentials= { oldCredentials | username = "", password = ""}
             in ({model | credentials = newCredentials, screen = Login, error = ""}, Cmd.none) 
+
+        
         --Update username and password on user input
         Username newUsername -> 
             let
@@ -487,6 +497,16 @@ update msg model = case Debug.log "msg" msg of
             let oldCredentials = model.credentials
                 newCredentials = { oldCredentials | password = newPassword}
             in ({model | credentials = newCredentials}, Cmd.none)
+
+        --Screen: Game 
+        GotoLeaderBoardScreen ->
+            if member model.screen [Game Start, Game End] then ({model | screen = LeaderBoard}, Cmd.none)
+            else (model, Cmd.none)
+
+        GoBackToGame ->
+            if model.screen == LeaderBoard then ({model | screen = Game Start}, Cmd.none)
+            else (model, Cmd.none)
+
 
         --SERVER 
         PostUserInfo result ->
@@ -513,8 +533,6 @@ update msg model = case Debug.log "msg" msg of
                     ( { model | overallHighscore = newModel}, Cmd.none)
                 Err error ->    
                     ( handleError model error, Cmd.none)
-
-
 
         --User Authentication 
         GotLoginResponse result ->
@@ -554,7 +572,6 @@ update msg model = case Debug.log "msg" msg of
                 Err error ->
                     ( handleError model error, Cmd.none)
 
-
         ToGame -> ({model | screen = Game Start}, Cmd.none)
 
 --error 
@@ -573,8 +590,6 @@ handleError model error =
             { model | error = "bad body " ++ body }
 
 
-
-
 --<<View>>
 view : Model -> { title : String, body : Collage Msg }
 view model = 
@@ -587,304 +602,75 @@ view model =
                         |> move (0,35)
                     , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] [])
                         |> move (0,20)
-                    , loginTitle
-                    , userBox 
-                    , passwordBox
-                    , loginButton
-                    , gotoSignUpButton
-                    , usertest
-                    , togame
-                    , errorMessage
+                    , loginTitle, userBox , passwordBox, loginButton, gotoSignUpButton, usertest, togame, errorMessage
                     ]
                 SignUp -> 
                     [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username] [])
                         |> move (0,35)
                     ,   html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] [])
                         |> move (0,20)
-                    , signUpTitle
-                    , userBox 
-                    , passwordBox
-                    , signUpButton
-                    , goBackButton
-                    , usertest
-                    , errorMessage
+                    , signUpTitle, userBox, passwordBox, signUpButton, goBackButton, usertest, errorMessage
                     ]
-                Game _ ->
-                    [ gamebody, background, caption, points, startText, gameOver, overallHighscore, floor,username, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
+                Game _ -> [ screen, basicTexts, startText, gameOver, overallHighscore, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
 
-                LeaderBoard -> 
-                    [ gamebody, background, caption, overallHighscore, floor,username, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
+                LeaderBoard -> [ screen, basicTexts, overallHighscore, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton, leaderBoard ] 
 
+        --delete later
+        togame = square 5 |> filled green |> notifyTap ToGame 
 
-        togame = square 5
-            |> filled green 
-            |> notifyTap ToGame 
-        usertest = textOutline (model.credentials.username ++ "/" ++ model.credentials.password) 4
-            |> move (0,-40)
+        usertest = textOutline (model.credentials.username ++ "/" ++ model.credentials.password) 4 |> move (0,-40)
 
-        errorMessage = GraphicSVG.text model.error
-            |> size 5
-            |> sansserif
-            |> bold 
-            |> filled red 
-            |> move (-39,-25) 
+        --Error Msg
+        errorMessage = GraphicSVG.text model.error |> size 5 |> sansserif |> bold |> filled red |> move (-39,-25) 
         
         --Screen: LOGIN
-        loginTitle = textOutline "Login" 12
-            |> move (-18,40)
+        loginTitle = textOutline "Login" 12 |> move (-18,40)
 
-        loginButton = group [loginShape,loginText]
+        loginButton = group [rect 30 10 |> filled grey |> addOutline(solid 0.7) black ,textOutline "Login" 6 |> move (-8,-2)]
             |> move (-20,-13)
             |> scale 0.7
             |> notifyTap LoginPost
 
-        loginShape = rect 30 10 
-            |> filled grey 
-            |> addOutline(solid 0.7) black 
-
-        loginText = textOutline "Login" 6
-            |> move (-8,-2)
-
-        userBox = group [userShape,userText]
+        userBox = group [rect 30 10.5 |> filled lightRed |> addOutline(solid 0.7) black , textOutline "Username" 5 |> move (-12,-2)]
             |> move (-20,22.7)
 
-        userShape = rect 30 10.5
-            |> filled lightRed 
-            |> addOutline(solid 0.7) black 
-
-        userText = textOutline "Username" 5
-            |> move (-12,-2)
-      
-        passwordBox = group [passwordShape,passwordText]
+        passwordBox = group [rect 30 10.5 |> filled blue |> addOutline(solid 0.7) black ,textOutline "Password" 5 |> move (-12,-2)]
             |> move (-20,8)
 
-        passwordShape = rect 30 10.5
-            |> filled blue 
-            |> addOutline(solid 0.7) black 
-
-        passwordText = textOutline "Password" 5
-            |> move (-12,-2)
-
-        gotoSignUpButton = group [gotoSignUpShape,gotoSignUpText]
+        gotoSignUpButton = group [rect 30 10 |> filled grey |> addOutline(solid 0.7) black ,textOutline "Sign up" 6 |> move (-10,-2)] 
             |> move (15,-13)
             |> scale 0.7
             |> notifyTap GotoSignUpScreen
 
-        gotoSignUpShape = rect 30 10 
-            |> filled grey 
-            |> addOutline(solid 0.7) black 
-        
-        gotoSignUpText = textOutline "Sign up" 6
-            |> move (-10,-2)
-        
         --Screen: SIGNUP
-        signUpTitle = textOutline "Sign Up" 12
-            |> move (-24,40)
+        signUpTitle = textOutline "Sign Up" 12 |> move (-24,40)
 
-        signUpButton = group [signUpShape,signUpText]
+        signUpButton = group [rect 30 10 |> filled grey |> addOutline(solid 0.7) black , textOutline "Sign up" 6 |> move (-10,-2)]
             |> move (15,-13)
             |> scale 0.7
             |> notifyTap SignUpPost
-
-        signUpShape = rect 30 10 
-            |> filled grey 
-            |> addOutline(solid 0.7) black 
-
-        signUpText = textOutline "Sign up" 6
-            |> move (-10,-2)
         
-        goBackButton = group [goBackShape,goBackText]
+        goBackButton = group [rect 30 10 |> filled grey |> addOutline(solid 0.7) black ,textOutline "Go Back" 6 |> move (-12,-2)]
             |> move (-20,-13)
             |> scale 0.7
             |> notifyTap GoBack
 
-        goBackShape = rect 30 10 
-            |> filled grey 
-            |> addOutline(solid 0.7) black 
-
-        goBackText = textOutline "Go Back" 6
-            |> move (-12,-2)
-        
         --Screen: GAME
-        caption = textOutline "Clash!" 10
-            |> move (-13,54)
+        basicTexts = group [textOutline "Clash!" 10 |> move (-13,54)
+                          , GraphicSVG.text ("Points: " ++ (String.fromInt model.userinfo.points)) |> sansserif |> bold |> size 4 |> (if member model.screen [Game Start, LeaderBoard]  then filled blank else filled black) |> move (-7,47)
+                          , textOutline ("User: " ++ model.credentials.username) 4 |> move (-46,-30)]
 
-        points = GraphicSVG.text ("Points: " ++ (String.fromInt model.userinfo.points)) 
-            |> sansserif
-            |> bold 
-            |> size 4
-            |> (if model.screen == Game Start then filled blank else filled black)
-            |> move (-7,47)
+        startText = group [GraphicSVG.text ("Instructions") |> sansserif |> bold |> underline |> size 5 |> (if model.screen == Game Start then filled black else filled blank) |> move (-13,40)
+                         , GraphicSVG.text "-Press Q to jump Player 1" |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,35)
+                         , GraphicSVG.text ("-Press W to jump Player 2") |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,30)
+                         , GraphicSVG.text ("-Big guy jumps over the small guy") |> sansserif |> bold |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-22,25)     
+                         , GraphicSVG.text ("Press Spacebar to Start!") |> sansserif |> bold |> size 5 |> (if model.screen == Game  Start then filled red else filled blank) |> move (-29,15)]
+                         |> move (0,4)
+
+        screen = group [ roundedRect 100 148 5 |> (filled (first (colorThemeToDeviceColor model.userinfo.deviceTheme))) |> addOutline (solid 1) black 
+                       , square 100 |> filled (rgb 214 244 255) |> addOutline (solid 1) black |> move (0, 17)
+                       , rect 100 20 |> filled (rgb 177 227 127) |> addOutline (solid 1) black |> move (0,-23.5)]
         
-        username = textOutline ("User: " ++ model.credentials.username) 4
-            |> move (-46,-30)
-
-        startText = group [gameStart, instructions1, instructions2, instructions3, instructions4]
-            |> move (0,4)
-
-        instructions1 = GraphicSVG.text ("Instructions")
-            |> sansserif
-            |> bold 
-            |> underline
-            |> size 5
-            |> (if model.screen == Game Start then filled black else filled blank)
-            |> move (-13,40)
-
-        instructions2 = GraphicSVG.text "-Press Q to jump Player 1"
-            |> sansserif
-            |> bold 
-            |> size 3
-            |> (if model.screen == Game Start then filled black else filled blank)
-            |> move (-17,35)
-        
-        instructions3 = GraphicSVG.text ("-Press W to jump Player 2")
-            |> sansserif
-            |> bold 
-            |> size 3
-            |> (if model.screen == Game Start then filled black else filled blank)
-            |> move (-17,30)     
-
-        instructions4 = GraphicSVG.text ("-Big guy jumps over the small guy")
-            |> sansserif
-            |> bold 
-            |> size 3
-            |> (if model.screen == Game Start then filled black else filled blank)
-            |> move (-22,25)    
-
-        gameStart = GraphicSVG.text ("Press Spacebar to Start!")
-            |> sansserif
-            |> bold 
-            |> size 5
-            |> (if model.screen == Game  Start then filled red else filled blank)
-            |> move (-29,15)
-
-        gameOver = GraphicSVG.text ("Game Over! Press Spacebar to Restart!")
-            |> sansserif 
-            |> bold
-            |> size 5
-            |> (if model.screen == Game  End then filled red else filled blank)
-            |> move (-46,35)
-
-        -- highScoreBoard = group [highScore, user, highscorePoints]
-        showLeaderBoardButton = group [showLeaderBoardShape, showLeaderBoardText]
-            |> move (13,-45)
-            |> notifyTap GotoLeaderBoardScreen
-
-        showLeaderBoardShape = roundedRect 9 9 2
-            |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))
-            |> addOutline (solid 0.7) black 
-        
-        showLeaderBoardText = textOutline "L" 8
-            |> move (-2.5,-2.5)
-
-        --Go back button
-        goBackToGameButton = group [goBackToGameShape, goBackToGameText]
-            |> move (13,-56)
-            |> notifyTap GoBackToGame
-
-        goBackToGameShape = roundedRect 9 9 2
-            |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))
-            |> addOutline (solid 0.7) black 
-        
-        goBackToGameText = textOutline "B" 8
-            |> move (-3,-3)
-
-
-        overallHighscore = group [highscoreShape, highScore, user, highscorePoints, gamesPlayed, avgPoints]
-            |> move (3,-3)
-
-        highscoreShape = roundedRect 47 33 2
-            |> filled lightGrey
-            |> addOutline (solid 0.7) black 
-            |> move (-24,-50)
-
-        highScore = textOutline ("Overall Highscore: " ++ String.fromInt model.overallHighscore.highscore) 4
-            |> move (-45,-40)
-       
-        user = textOutline ("By User: " ++ model.overallHighscore.username) 3
-            |> move (-45,-45)
-
-        highscorePoints = textOutline ("Your highscore is: " ++ String.fromInt model.userinfo.highscore ) 3
-            |> move (-45,-52)
-
-        gamesPlayed = textOutline ("# Games Played: " ++ String.fromInt model.userinfo.gamesPlayed) 3
-            |> move (-45, -57)
-
-        avgPoints = textOutline ("Avg Points: " ++ String.fromFloat model.userinfo.avgPoints ) 3
-            |> move (-45, -62)
-
-        background = square 100
-            |> filled (rgb 214 244 255)
-            |> addOutline (solid 1) black 
-            |> move (0, 17)
-
-        floor = rect 100 20
-            |> filled (rgb 177 227 127)
-            |> addOutline (solid 1) black 
-            |> move (0,-23.5)
-
-        --Player 1
-        player1 = group [player1_body, player1_eye]
-            |> move (model.player1_pos)
-
-        player1_body = 
-                if model.bigPlayer == Player1 then
-                        square 16
-                        |> filled (first (colorThemeToPlayerColor model.userinfo.playerTheme))
-                        |> addOutline (solid 1) black
-                        |> move (0.0,5.5)
-                else
-                        square 8
-                        |> filled (first (colorThemeToPlayerColor model.userinfo.playerTheme))
-                        |> addOutline (solid 1) black
-                        |> move(0.0,1.5)
-
-        player1_eye = 
-            if model.bigPlayer == Player1 then
-                circle 1.5
-                |> filled white
-                |> move (3,7)
-                |> addOutline (solid 1) black
-            else
-                circle 0.8
-                |> filled white
-                |> move(1.7,2)
-                |> addOutline(solid 0.7) black
-
-        --Player 2
-        player2 = group [player2_body, player2_eye]
-            |> move (model.player2_pos)
-
-        player2_body = if model.bigPlayer == Player2 then 
-                    square 16
-                    |> filled (second (colorThemeToPlayerColor model.userinfo.playerTheme))
-                    |> addOutline (solid 1) black 
-                    |> move (0.0,5.5)
-                else 
-                    square 8
-                    |> filled (second (colorThemeToPlayerColor model.userinfo.playerTheme))
-                    |> addOutline (solid 1) black 
-                    |> move(0.0,1.5)
-
-        player2_eye = 
-            if model.bigPlayer == Player2 then 
-                rect 6 2 
-                    |> filled white 
-                    |> addOutline (solid 1) black 
-                    |> move (3.5,7.5)
-                    |> rotate 0.7
-            else 
-                rect 2.5 1
-                    |> filled white 
-                    |> addOutline (solid 0.5) black
-                    |> rotate (0.7)
-                    |> move (-1,2.5)
-
-        --theme
-        gamebody = roundedRect 100 148 5
-            |> (filled (first (colorThemeToDeviceColor model.userinfo.deviceTheme)))
-            |> addOutline (solid 1) black 
-
         themeButtons = group[ --UpButton
                               circle 4 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme))) |> addOutline(solid 0.7) black |> move (28.5,-40) |> notifyTap (ChangeColorTheme ThemeUp)
                             , triangle 2 |> filled black |> rotate (3.14/2)|> move (28.5,-40) |> (notifyTap (ChangeColorTheme ThemeUp))
@@ -899,20 +685,62 @@ view model =
                             , triangle 2 |> filled black |> mirrorX |> move (21,-48) |> notifyTap (ChangeColorTheme ThemeLeft)
                             ] |> move (6,0)
 
-        --logout
-        logoutButton = group [logoutShape,logoutText]
+        showLeaderBoardButton = group [roundedRect 9 9 2 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme))) |> addOutline (solid 0.7) black , textOutline "L" 8 |> move (-2.5,-2.5)]
+                                        |> move (13,-45)
+                                        |> notifyTap GotoLeaderBoardScreen
+
+        overallHighscore = group [roundedRect 47 33 2 |> filled lightGrey |> addOutline (solid 0.7) black |> move (-24,-50)
+                                , textOutline ("Overall Highscore: " ++ String.fromInt model.overallHighscore.highscore) 4 |> move (-45,-40)
+                                , textOutline ("By User: " ++ model.overallHighscore.username) 3 |> move (-45,-45)
+                                , textOutline ("Your highscore is: " ++ String.fromInt model.userinfo.highscore ) 3 |> move (-45,-52)
+                                , textOutline ("# Games Played: " ++ String.fromInt model.userinfo.gamesPlayed) 3 |> move (-45, -57)
+                                , textOutline ("Avg Points: " ++ String.fromFloat model.userinfo.avgPoints ) 3 |> move (-45, -62) ]
+                                |> move (3,-3)
+
+        gameOver = GraphicSVG.text ("Game Over! Press Spacebar to Restart!") |> sansserif |> bold |> size 5 |> (if model.screen == Game  End then filled red else filled blank) |> move (-46,35)
+
+        logoutButton = group [roundedRect 30 10 2 |> filled (rgb 212 53 79) |> addOutline(solid 1) black , textOutline "Logout" 6 |> move (-10,-2)]
             |> move (41,-96)
             |> scale 0.7
             |> notifyTap LogoutPost
 
-        logoutShape = roundedRect 30 10 2
-            |> filled (rgb 212 53 79)
-            |> addOutline(solid 1) black 
+        --Player 1
+        player1 = group [player1_body, player1_eye]
+            |> move (model.player1_pos)
 
-        logoutText = textOutline "Logout" 6
-            |> move (-10,-2)
+        player1_body = if model.bigPlayer == Player1 then
+                            square 16 |> filled (first (colorThemeToPlayerColor model.userinfo.playerTheme)) |> addOutline (solid 1) black |> move (0.0,5.5)
+                       else square 8 |> filled (first (colorThemeToPlayerColor model.userinfo.playerTheme)) |> addOutline (solid 1) black |> move(0.0,1.5)
 
-        
+        player1_eye = if model.bigPlayer == Player1 then
+                            circle 1.5 |> filled white |> move (3,7) |> addOutline (solid 1) black
+                      else circle 0.8 |> filled white |> move(1.7,2) |> addOutline(solid 0.7) black
+
+        --Player 2
+        player2 = group [player2_body, player2_eye]
+            |> move (model.player2_pos)
+
+        player2_body = if model.bigPlayer == Player2 then 
+                            square 16 |> filled (second (colorThemeToPlayerColor model.userinfo.playerTheme)) |> addOutline (solid 1) black |> move (0.0,5.5)
+                       else square 8 |> filled (second (colorThemeToPlayerColor model.userinfo.playerTheme)) |> addOutline (solid 1) black |> move(0.0,1.5)
+
+        player2_eye = if model.bigPlayer == Player2 then 
+                        rect 6 2 |> filled white |> addOutline (solid 1) black |> move (3.5,7.5) |> rotate 0.7
+                      else rect 2.5 1 |> filled white |> addOutline (solid 0.5) black |> rotate (0.7) |> move (-1,2.5)
+
+
+        --Screen: LEADERBOARD
+        leaderBoard = group [ textOutline "Username" 6 |> move (-30,43), textOutline "Points" 6 |> move (12,43)
+                            , textOutline ("1) " ++ model.leaderBoard.firstPlace.username) 6 |> move (-30,33), textOutline (String.fromInt model.leaderBoard.firstPlace.highscore) 6 |> move (20,33)
+                            , textOutline ("2) " ++ model.leaderBoard.secondPlace.username) 6 |> move (-30,23), textOutline (String.fromInt model.leaderBoard.secondPlace.highscore) 6 |> move (20,23)
+                            , textOutline ("3) " ++ model.leaderBoard.thirdPlace.username) 6 |> move (-30,13), textOutline (String.fromInt model.leaderBoard.thirdPlace.highscore) 6 |> move (20,13)
+                            , textOutline ("4) " ++ model.leaderBoard.fourthPlace.username) 6 |> move (-30,3), textOutline (String.fromInt model.leaderBoard.fourthPlace.highscore) 6 |> move (20,3)
+                            , textOutline ("5) " ++ model.leaderBoard.fifthPlace.username) 6 |> move (-30,-7), textOutline (String.fromInt model.leaderBoard.fifthPlace.highscore) 6 |> move (20,-7)
+                             ]
+
+        goBackToGameButton = group [roundedRect 9 9 2 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))|> addOutline (solid 0.7) black , textOutline "B" 8 |> move (-3,-3)]
+                                    |> move (13,-56)
+                                    |> notifyTap GoBackToGame
 
     in { title = title , body = body }
 

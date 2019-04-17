@@ -8937,6 +8937,13 @@ var author$project$Main$init = F3(
 			gameEnd: false,
 			jumpX: 1.5,
 			jumpingPlayer: author$project$Main$None,
+			leaderBoard: {
+				fifthPlace: {highscore: 0, username: '---------'},
+				firstPlace: {highscore: 0, username: '---------'},
+				fourthPlace: {highscore: 0, username: '---------'},
+				secondPlace: {highscore: 0, username: '---------'},
+				thirdPlace: {highscore: 0, username: '---------'}
+			},
 			overallHighscore: {highscore: 0, username: ''},
 			player1_pos: _Utils_Tuple2(-30, -10),
 			player2_pos: _Utils_Tuple2(30, -10),
@@ -8997,14 +9004,14 @@ var author$project$Main$changeThemeRight = function (colorTheme) {
 var author$project$Main$GetOverallHighscore = function (a) {
 	return {$: 'GetOverallHighscore', a: a};
 };
-var author$project$Main$OverallHighscore = F2(
+var author$project$Main$Highscore = F2(
 	function (username, highscore) {
 		return {highscore: highscore, username: username};
 	});
 var elm$json$Json$Decode$string = _Json_decodeString;
 var author$project$Main$overallHighscoreDecoder = A3(
 	elm$json$Json$Decode$map2,
-	author$project$Main$OverallHighscore,
+	author$project$Main$Highscore,
 	A2(elm$json$Json$Decode$field, 'username', elm$json$Json$Decode$string),
 	A2(elm$json$Json$Decode$field, 'highscore', elm$json$Json$Decode$int));
 var author$project$Main$rootUrl = 'https://mac1xa3.ca/e/leej229/';
@@ -10197,27 +10204,6 @@ var author$project$Main$update = F2(
 						model,
 						{credentials: newCredentials, error: '', screen: author$project$Main$SignUp}),
 					elm$core$Platform$Cmd$none);
-			case 'GotoLeaderBoardScreen':
-				return A2(
-					elm$core$List$member,
-					model.screen,
-					_List_fromArray(
-						[
-							author$project$Main$Game(author$project$Main$Start),
-							author$project$Main$Game(author$project$Main$End)
-						])) ? _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{screen: author$project$Main$LeaderBoard}),
-					elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-			case 'GoBackToGame':
-				return _Utils_eq(model.screen, author$project$Main$LeaderBoard) ? _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							screen: author$project$Main$Game(author$project$Main$Start)
-						}),
-					elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 			case 'SignUpPost':
 				return _Utils_Tuple2(
 					model,
@@ -10254,6 +10240,27 @@ var author$project$Main$update = F2(
 						model,
 						{credentials: newCredentials}),
 					elm$core$Platform$Cmd$none);
+			case 'GotoLeaderBoardScreen':
+				return A2(
+					elm$core$List$member,
+					model.screen,
+					_List_fromArray(
+						[
+							author$project$Main$Game(author$project$Main$Start),
+							author$project$Main$Game(author$project$Main$End)
+						])) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{screen: author$project$Main$LeaderBoard}),
+					elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+			case 'GoBackToGame':
+				return _Utils_eq(model.screen, author$project$Main$LeaderBoard) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							screen: author$project$Main$Game(author$project$Main$Start)
+						}),
+					elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 			case 'PostUserInfo':
 				var result = _n0.a;
 				if (result.$ === 'Ok') {
@@ -11039,32 +11046,25 @@ var author$project$Main$view = function (model) {
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(0, -40),
 		A2(author$project$Main$textOutline, model.credentials.username + ('/' + model.credentials.password), 4));
-	var username = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-46, -30),
-		A2(author$project$Main$textOutline, 'User: ' + model.credentials.username, 4));
-	var userText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-12, -2),
-		A2(author$project$Main$textOutline, 'Username', 5));
-	var userShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$lightRed,
-			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10.5)));
 	var userBox = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-20, 22.7),
 		MacCASOutreach$graphicsvg$GraphicSVG$group(
 			_List_fromArray(
-				[userShape, userText])));
-	var user = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-45, -45),
-		A2(author$project$Main$textOutline, 'By User: ' + model.overallHighscore.username, 3));
+				[
+					A3(
+					MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+					MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+					MacCASOutreach$graphicsvg$GraphicSVG$black,
+					A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$filled,
+						MacCASOutreach$graphicsvg$GraphicSVG$lightRed,
+						A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10.5))),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-12, -2),
+					A2(author$project$Main$textOutline, 'Username', 5))
+				])));
 	var togame = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$ToGame,
@@ -11184,22 +11184,78 @@ var author$project$Main$view = function (model) {
 								MacCASOutreach$graphicsvg$GraphicSVG$black,
 								MacCASOutreach$graphicsvg$GraphicSVG$triangle(2)))))
 				])));
+	var startText = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(0, 4),
+		MacCASOutreach$graphicsvg$GraphicSVG$group(
+			_List_fromArray(
+				[
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-13, 40),
+					(_Utils_eq(
+						model.screen,
+						author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$size,
+							5,
+							MacCASOutreach$graphicsvg$GraphicSVG$underline(
+								MacCASOutreach$graphicsvg$GraphicSVG$bold(
+									MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
+										MacCASOutreach$graphicsvg$GraphicSVG$text('Instructions'))))))),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-17, 35),
+					(_Utils_eq(
+						model.screen,
+						author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$size,
+							3,
+							MacCASOutreach$graphicsvg$GraphicSVG$bold(
+								MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
+									MacCASOutreach$graphicsvg$GraphicSVG$text('-Press Q to jump Player 1')))))),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-17, 30),
+					(_Utils_eq(
+						model.screen,
+						author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$size,
+							3,
+							MacCASOutreach$graphicsvg$GraphicSVG$bold(
+								MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
+									MacCASOutreach$graphicsvg$GraphicSVG$text('-Press W to jump Player 2')))))),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-22, 25),
+					(_Utils_eq(
+						model.screen,
+						author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$size,
+							3,
+							MacCASOutreach$graphicsvg$GraphicSVG$bold(
+								MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
+									MacCASOutreach$graphicsvg$GraphicSVG$text('-Big guy jumps over the small guy')))))),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-29, 15),
+					(_Utils_eq(
+						model.screen,
+						author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$red) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$size,
+							5,
+							MacCASOutreach$graphicsvg$GraphicSVG$bold(
+								MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
+									MacCASOutreach$graphicsvg$GraphicSVG$text('Press Spacebar to Start!'))))))
+				])));
 	var signUpTitle = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-24, 40),
 		A2(author$project$Main$textOutline, 'Sign Up', 12));
-	var signUpText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-10, -2),
-		A2(author$project$Main$textOutline, 'Sign up', 6));
-	var signUpShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$grey,
-			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10)));
 	var signUpButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$SignUpPost,
@@ -11211,19 +11267,20 @@ var author$project$Main$view = function (model) {
 				_Utils_Tuple2(15, -13),
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
-						[signUpShape, signUpText])))));
-	var showLeaderBoardText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-2.5, -2.5),
-		A2(author$project$Main$textOutline, 'L', 8));
-	var showLeaderBoardShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			author$project$Main$colorThemeToDeviceColor(model.userinfo.deviceTheme).b,
-			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 9, 9, 2)));
+						[
+							A3(
+							MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+							MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+							MacCASOutreach$graphicsvg$GraphicSVG$black,
+							A2(
+								MacCASOutreach$graphicsvg$GraphicSVG$filled,
+								MacCASOutreach$graphicsvg$GraphicSVG$grey,
+								A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10))),
+							A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$move,
+							_Utils_Tuple2(-10, -2),
+							A2(author$project$Main$textOutline, 'Sign up', 6))
+						])))));
 	var showLeaderBoardButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$GotoLeaderBoardScreen,
@@ -11232,20 +11289,54 @@ var author$project$Main$view = function (model) {
 			_Utils_Tuple2(13, -45),
 			MacCASOutreach$graphicsvg$GraphicSVG$group(
 				_List_fromArray(
-					[showLeaderBoardShape, showLeaderBoardText]))));
-	var points = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-7, 47),
-		(_Utils_eq(
-			model.screen,
-			author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black))(
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$size,
-				4,
-				MacCASOutreach$graphicsvg$GraphicSVG$bold(
-					MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
-						MacCASOutreach$graphicsvg$GraphicSVG$text(
-							'Points: ' + elm$core$String$fromInt(model.userinfo.points)))))));
+					[
+						A3(
+						MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+						MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+						MacCASOutreach$graphicsvg$GraphicSVG$black,
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$filled,
+							author$project$Main$colorThemeToDeviceColor(model.userinfo.deviceTheme).b,
+							A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 9, 9, 2))),
+						A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$move,
+						_Utils_Tuple2(-2.5, -2.5),
+						A2(author$project$Main$textOutline, 'L', 8))
+					]))));
+	var screen = MacCASOutreach$graphicsvg$GraphicSVG$group(
+		_List_fromArray(
+			[
+				A3(
+				MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+				MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
+				MacCASOutreach$graphicsvg$GraphicSVG$black,
+				A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$filled,
+					author$project$Main$colorThemeToDeviceColor(model.userinfo.deviceTheme).a,
+					A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 100, 148, 5))),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(0, 17),
+				A3(
+					MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+					MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
+					MacCASOutreach$graphicsvg$GraphicSVG$black,
+					A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$filled,
+						A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 214, 244, 255),
+						MacCASOutreach$graphicsvg$GraphicSVG$square(100)))),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(0, -23.5),
+				A3(
+					MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+					MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
+					MacCASOutreach$graphicsvg$GraphicSVG$black,
+					A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$filled,
+						A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 177, 227, 127),
+						A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 100, 20))))
+			]));
 	var player2_eye = _Utils_eq(model.bigPlayer, author$project$Main$Player2) ? A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$rotate,
 		0.7,
@@ -11348,36 +11439,75 @@ var author$project$Main$view = function (model) {
 		MacCASOutreach$graphicsvg$GraphicSVG$group(
 			_List_fromArray(
 				[player1_body, player1_eye])));
-	var passwordText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-12, -2),
-		A2(author$project$Main$textOutline, 'Password', 5));
-	var passwordShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$blue,
-			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10.5)));
 	var passwordBox = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-20, 8),
 		MacCASOutreach$graphicsvg$GraphicSVG$group(
 			_List_fromArray(
-				[passwordShape, passwordText])));
-	var logoutText = A2(
+				[
+					A3(
+					MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+					MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+					MacCASOutreach$graphicsvg$GraphicSVG$black,
+					A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$filled,
+						MacCASOutreach$graphicsvg$GraphicSVG$blue,
+						A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10.5))),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-12, -2),
+					A2(author$project$Main$textOutline, 'Password', 5))
+				])));
+	var overallHighscore = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-10, -2),
-		A2(author$project$Main$textOutline, 'Logout', 6));
-	var logoutShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 212, 53, 79),
-			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 30, 10, 2)));
+		_Utils_Tuple2(3, -3),
+		MacCASOutreach$graphicsvg$GraphicSVG$group(
+			_List_fromArray(
+				[
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-24, -50),
+					A3(
+						MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+						MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+						MacCASOutreach$graphicsvg$GraphicSVG$black,
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$filled,
+							MacCASOutreach$graphicsvg$GraphicSVG$lightGrey,
+							A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 47, 33, 2)))),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-45, -40),
+					A2(
+						author$project$Main$textOutline,
+						'Overall Highscore: ' + elm$core$String$fromInt(model.overallHighscore.highscore),
+						4)),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-45, -45),
+					A2(author$project$Main$textOutline, 'By User: ' + model.overallHighscore.username, 3)),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-45, -52),
+					A2(
+						author$project$Main$textOutline,
+						'Your highscore is: ' + elm$core$String$fromInt(model.userinfo.highscore),
+						3)),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-45, -57),
+					A2(
+						author$project$Main$textOutline,
+						'# Games Played: ' + elm$core$String$fromInt(model.userinfo.gamesPlayed),
+						3)),
+					A2(
+					MacCASOutreach$graphicsvg$GraphicSVG$move,
+					_Utils_Tuple2(-45, -62),
+					A2(
+						author$project$Main$textOutline,
+						'Avg Points: ' + elm$core$String$fromFloat(model.userinfo.avgPoints),
+						3))
+				])));
 	var logoutButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$LogoutPost,
@@ -11389,23 +11519,24 @@ var author$project$Main$view = function (model) {
 				_Utils_Tuple2(41, -96),
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
-						[logoutShape, logoutText])))));
+						[
+							A3(
+							MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+							MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
+							MacCASOutreach$graphicsvg$GraphicSVG$black,
+							A2(
+								MacCASOutreach$graphicsvg$GraphicSVG$filled,
+								A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 212, 53, 79),
+								A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 30, 10, 2))),
+							A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$move,
+							_Utils_Tuple2(-10, -2),
+							A2(author$project$Main$textOutline, 'Logout', 6))
+						])))));
 	var loginTitle = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-18, 40),
 		A2(author$project$Main$textOutline, 'Login', 12));
-	var loginText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-8, -2),
-		A2(author$project$Main$textOutline, 'Login', 6));
-	var loginShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$grey,
-			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10)));
 	var loginButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$LoginPost,
@@ -11417,93 +11548,87 @@ var author$project$Main$view = function (model) {
 				_Utils_Tuple2(-20, -13),
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
-						[loginShape, loginText])))));
-	var instructions4 = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-22, 25),
-		(_Utils_eq(
-			model.screen,
-			author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$size,
-				3,
-				MacCASOutreach$graphicsvg$GraphicSVG$bold(
-					MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
-						MacCASOutreach$graphicsvg$GraphicSVG$text('-Big guy jumps over the small guy'))))));
-	var instructions3 = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-17, 30),
-		(_Utils_eq(
-			model.screen,
-			author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$size,
-				3,
-				MacCASOutreach$graphicsvg$GraphicSVG$bold(
-					MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
-						MacCASOutreach$graphicsvg$GraphicSVG$text('-Press W to jump Player 2'))))));
-	var instructions2 = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-17, 35),
-		(_Utils_eq(
-			model.screen,
-			author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$size,
-				3,
-				MacCASOutreach$graphicsvg$GraphicSVG$bold(
-					MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
-						MacCASOutreach$graphicsvg$GraphicSVG$text('-Press Q to jump Player 1'))))));
-	var instructions1 = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-13, 40),
-		(_Utils_eq(
-			model.screen,
-			author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$size,
-				5,
-				MacCASOutreach$graphicsvg$GraphicSVG$underline(
-					MacCASOutreach$graphicsvg$GraphicSVG$bold(
-						MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
-							MacCASOutreach$graphicsvg$GraphicSVG$text('Instructions')))))));
-	var highscoreShape = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-24, -50),
-		A3(
-			MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-			MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-			MacCASOutreach$graphicsvg$GraphicSVG$black,
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$filled,
-				MacCASOutreach$graphicsvg$GraphicSVG$lightGrey,
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 47, 33, 2))));
-	var highscorePoints = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-45, -52),
-		A2(
-			author$project$Main$textOutline,
-			'Your highscore is: ' + elm$core$String$fromInt(model.userinfo.highscore),
-			3));
-	var highScore = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-45, -40),
-		A2(
-			author$project$Main$textOutline,
-			'Overall Highscore: ' + elm$core$String$fromInt(model.overallHighscore.highscore),
-			4));
-	var gotoSignUpText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-10, -2),
-		A2(author$project$Main$textOutline, 'Sign up', 6));
-	var gotoSignUpShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$grey,
-			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10)));
+						[
+							A3(
+							MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+							MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+							MacCASOutreach$graphicsvg$GraphicSVG$black,
+							A2(
+								MacCASOutreach$graphicsvg$GraphicSVG$filled,
+								MacCASOutreach$graphicsvg$GraphicSVG$grey,
+								A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10))),
+							A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$move,
+							_Utils_Tuple2(-8, -2),
+							A2(author$project$Main$textOutline, 'Login', 6))
+						])))));
+	var leaderBoard = MacCASOutreach$graphicsvg$GraphicSVG$group(
+		_List_fromArray(
+			[
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-30, 43),
+				A2(author$project$Main$textOutline, 'Username', 6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(12, 43),
+				A2(author$project$Main$textOutline, 'Points', 6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-30, 33),
+				A2(author$project$Main$textOutline, '1) ' + model.leaderBoard.firstPlace.username, 6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(20, 33),
+				A2(
+					author$project$Main$textOutline,
+					elm$core$String$fromInt(model.leaderBoard.firstPlace.highscore),
+					6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-30, 23),
+				A2(author$project$Main$textOutline, '2) ' + model.leaderBoard.secondPlace.username, 6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(20, 23),
+				A2(
+					author$project$Main$textOutline,
+					elm$core$String$fromInt(model.leaderBoard.secondPlace.highscore),
+					6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-30, 13),
+				A2(author$project$Main$textOutline, '3) ' + model.leaderBoard.thirdPlace.username, 6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(20, 13),
+				A2(
+					author$project$Main$textOutline,
+					elm$core$String$fromInt(model.leaderBoard.thirdPlace.highscore),
+					6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-30, 3),
+				A2(author$project$Main$textOutline, '4) ' + model.leaderBoard.fourthPlace.username, 6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(20, 3),
+				A2(
+					author$project$Main$textOutline,
+					elm$core$String$fromInt(model.leaderBoard.fourthPlace.highscore),
+					6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-30, -7),
+				A2(author$project$Main$textOutline, '5) ' + model.leaderBoard.fifthPlace.username, 6)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(20, -7),
+				A2(
+					author$project$Main$textOutline,
+					elm$core$String$fromInt(model.leaderBoard.fifthPlace.highscore),
+					6))
+			]));
 	var gotoSignUpButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$GotoSignUpScreen,
@@ -11515,19 +11640,20 @@ var author$project$Main$view = function (model) {
 				_Utils_Tuple2(15, -13),
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
-						[gotoSignUpShape, gotoSignUpText])))));
-	var goBackToGameText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-3, -3),
-		A2(author$project$Main$textOutline, 'B', 8));
-	var goBackToGameShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			author$project$Main$colorThemeToDeviceColor(model.userinfo.deviceTheme).b,
-			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 9, 9, 2)));
+						[
+							A3(
+							MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+							MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+							MacCASOutreach$graphicsvg$GraphicSVG$black,
+							A2(
+								MacCASOutreach$graphicsvg$GraphicSVG$filled,
+								MacCASOutreach$graphicsvg$GraphicSVG$grey,
+								A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10))),
+							A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$move,
+							_Utils_Tuple2(-10, -2),
+							A2(author$project$Main$textOutline, 'Sign up', 6))
+						])))));
 	var goBackToGameButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$GoBackToGame,
@@ -11536,19 +11662,20 @@ var author$project$Main$view = function (model) {
 			_Utils_Tuple2(13, -56),
 			MacCASOutreach$graphicsvg$GraphicSVG$group(
 				_List_fromArray(
-					[goBackToGameShape, goBackToGameText]))));
-	var goBackText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-12, -2),
-		A2(author$project$Main$textOutline, 'Go Back', 6));
-	var goBackShape = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$grey,
-			A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10)));
+					[
+						A3(
+						MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+						MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+						MacCASOutreach$graphicsvg$GraphicSVG$black,
+						A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$filled,
+							author$project$Main$colorThemeToDeviceColor(model.userinfo.deviceTheme).b,
+							A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 9, 9, 2))),
+						A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$move,
+						_Utils_Tuple2(-3, -3),
+						A2(author$project$Main$textOutline, 'B', 8))
+					]))));
 	var goBackButton = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
 		author$project$Main$GoBack,
@@ -11560,40 +11687,20 @@ var author$project$Main$view = function (model) {
 				_Utils_Tuple2(-20, -13),
 				MacCASOutreach$graphicsvg$GraphicSVG$group(
 					_List_fromArray(
-						[goBackShape, goBackText])))));
-	var gamesPlayed = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-45, -57),
-		A2(
-			author$project$Main$textOutline,
-			'# Games Played: ' + elm$core$String$fromInt(model.userinfo.gamesPlayed),
-			3));
-	var gamebody = A3(
-		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-		MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
-		MacCASOutreach$graphicsvg$GraphicSVG$black,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			author$project$Main$colorThemeToDeviceColor(model.userinfo.deviceTheme).a,
-			A3(MacCASOutreach$graphicsvg$GraphicSVG$roundedRect, 100, 148, 5)));
-	var gameStart = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-29, 15),
-		(_Utils_eq(
-			model.screen,
-			author$project$Main$Game(author$project$Main$Start)) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$red) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank))(
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$size,
-				5,
-				MacCASOutreach$graphicsvg$GraphicSVG$bold(
-					MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
-						MacCASOutreach$graphicsvg$GraphicSVG$text('Press Spacebar to Start!'))))));
-	var startText = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(0, 4),
-		MacCASOutreach$graphicsvg$GraphicSVG$group(
-			_List_fromArray(
-				[gameStart, instructions1, instructions2, instructions3, instructions4])));
+						[
+							A3(
+							MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
+							MacCASOutreach$graphicsvg$GraphicSVG$solid(0.7),
+							MacCASOutreach$graphicsvg$GraphicSVG$black,
+							A2(
+								MacCASOutreach$graphicsvg$GraphicSVG$filled,
+								MacCASOutreach$graphicsvg$GraphicSVG$grey,
+								A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 30, 10))),
+							A2(
+							MacCASOutreach$graphicsvg$GraphicSVG$move,
+							_Utils_Tuple2(-12, -2),
+							A2(author$project$Main$textOutline, 'Go Back', 6))
+						])))));
 	var gameOver = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-46, 35),
@@ -11606,17 +11713,6 @@ var author$project$Main$view = function (model) {
 				MacCASOutreach$graphicsvg$GraphicSVG$bold(
 					MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
 						MacCASOutreach$graphicsvg$GraphicSVG$text('Game Over! Press Spacebar to Restart!'))))));
-	var floor = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(0, -23.5),
-		A3(
-			MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-			MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
-			MacCASOutreach$graphicsvg$GraphicSVG$black,
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$filled,
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 177, 227, 127),
-				A2(MacCASOutreach$graphicsvg$GraphicSVG$rect, 100, 20))));
 	var errorMessage = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-39, -25),
@@ -11629,34 +11725,36 @@ var author$project$Main$view = function (model) {
 						MacCASOutreach$graphicsvg$GraphicSVG$size,
 						5,
 						MacCASOutreach$graphicsvg$GraphicSVG$text(model.error))))));
-	var caption = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-13, 54),
-		A2(author$project$Main$textOutline, 'Clash!', 10));
-	var background = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(0, 17),
-		A3(
-			MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
-			MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
-			MacCASOutreach$graphicsvg$GraphicSVG$black,
-			A2(
-				MacCASOutreach$graphicsvg$GraphicSVG$filled,
-				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 214, 244, 255),
-				MacCASOutreach$graphicsvg$GraphicSVG$square(100))));
-	var avgPoints = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(-45, -62),
-		A2(
-			author$project$Main$textOutline,
-			'Avg Points: ' + elm$core$String$fromFloat(model.userinfo.avgPoints),
-			3));
-	var overallHighscore = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(3, -3),
-		MacCASOutreach$graphicsvg$GraphicSVG$group(
-			_List_fromArray(
-				[highscoreShape, highScore, user, highscorePoints, gamesPlayed, avgPoints])));
+	var basicTexts = MacCASOutreach$graphicsvg$GraphicSVG$group(
+		_List_fromArray(
+			[
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-13, 54),
+				A2(author$project$Main$textOutline, 'Clash!', 10)),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-7, 47),
+				(A2(
+					elm$core$List$member,
+					model.screen,
+					_List_fromArray(
+						[
+							author$project$Main$Game(author$project$Main$Start),
+							author$project$Main$LeaderBoard
+						])) ? MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$blank) : MacCASOutreach$graphicsvg$GraphicSVG$filled(MacCASOutreach$graphicsvg$GraphicSVG$black))(
+					A2(
+						MacCASOutreach$graphicsvg$GraphicSVG$size,
+						4,
+						MacCASOutreach$graphicsvg$GraphicSVG$bold(
+							MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
+								MacCASOutreach$graphicsvg$GraphicSVG$text(
+									'Points: ' + elm$core$String$fromInt(model.userinfo.points))))))),
+				A2(
+				MacCASOutreach$graphicsvg$GraphicSVG$move,
+				_Utils_Tuple2(-46, -30),
+				A2(author$project$Main$textOutline, 'User: ' + model.credentials.username, 4))
+			]));
 	var shapes = function () {
 		var _n0 = model.screen;
 		switch (_n0.$) {
@@ -11759,10 +11857,10 @@ var author$project$Main$view = function (model) {
 					]);
 			case 'Game':
 				return _List_fromArray(
-					[gamebody, background, caption, points, startText, gameOver, overallHighscore, floor, username, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton]);
+					[screen, basicTexts, startText, gameOver, overallHighscore, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton]);
 			default:
 				return _List_fromArray(
-					[gamebody, background, caption, overallHighscore, floor, username, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton]);
+					[screen, basicTexts, overallHighscore, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton, leaderBoard]);
 		}
 	}();
 	var body = A3(MacCASOutreach$graphicsvg$GraphicSVG$collage, 101, 150, shapes);

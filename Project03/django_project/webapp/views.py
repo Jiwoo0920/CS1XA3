@@ -71,7 +71,10 @@ def getUserInfo(request):
 		respDict = {}
 		respDict['highscore'] = userinfo.highscore
 		respDict['points'] = userinfo.points
-		respDict['avgPoints'] = round((userinfo.totalPoints/userinfo.gamesPlayed),5)
+		if userinfo.gamesPlayed > 0:
+			respDict['avgPoints'] = round((userinfo.totalPoints/userinfo.gamesPlayed),5)
+		else:
+			respDict['avgPoints'] = 0
 		respDict['gamesPlayed'] = userinfo.gamesPlayed
 		respDict['playerTheme'] = userinfo.playerTheme
 		respDict['deviceTheme'] = userinfo.deviceTheme
@@ -90,3 +93,5 @@ def getOverallHighscore(request):
 	return JsonResponse(respDict)
 
 
+def getLeaderBoard(request):
+	pass
