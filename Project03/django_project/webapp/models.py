@@ -13,8 +13,8 @@ class UserInfoManager(models.Manager):
 class UserInfo(models.Model):
 	user = models.OneToOneField(User,on_delete=models.CASCADE,primary_key=True)
 	highscore = models.IntegerField(default=0)
-	playerTheme = models.IntegerField(default=1)
-	deviceTheme = models.IntegerField(default=1)
+	playerTheme = models.CharField(max_length=10,default='1')
+	deviceTheme = models.CharField(max_length=10,default='1')
 	gamesPlayed = models.IntegerField(default=0)
 	objects = UserInfoManager()
 

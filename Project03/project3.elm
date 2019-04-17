@@ -22,27 +22,21 @@ type Msg = Tick Float GetKeyState
          | MakeRequest Browser.UrlRequest
          | UrlChange Url.Url
          | DecideBigPlayer Player
-         | ChangeColorThemeRight
-         | ChangeColorThemeLeft
-         | ChangeDeviceColorUp
-         | ChangeDeviceColorDown
+         | ChangeColorTheme ThemeButton
          | LoginPost
-         | LogoutButton
-         | GotoSignUpScreen
          | SignUpPost
+         | LogoutPost
+         | GotoSignUpScreen
          | GoBack
          | GotLoginResponse (Result Http.Error String) 
          | GotSignupResponse (Result Http.Error String) 
          | GotLogoutResponse (Result Http.Error String) 
-         | GotHighscoreResponse (Result Http.Error String) 
          | Username String
          | Password String
+         | PostUserInfo (Result Http.Error String) 
          | GetUserInfo (Result Http.Error UserInfo)
-         | GetOverallHighscore (Result Http.Error UserInfo)
+         | GetOverallHighscore (Result Http.Error OverallHighscore)
          | ToGame
-         | GotSettingPostResponse (Result Http.Error String) 
-         | GetSettings (Result Http.Error Settings)
-         | UpdateGamesPlayed (Result Http.Error String) 
 
 
 type Player = Player1 | Player2 | None
@@ -55,7 +49,7 @@ type Screen = Login | SignUp | Game GameStatus
 
 type ColorTheme = Theme1 | Theme2 | Theme3 | Theme4 | Theme5 
 
-
+type ThemeButton = ThemeUp | ThemeDown | ThemeRight | ThemeLeft
 
 type alias Model = { screen : Screen
                    , error : String 
@@ -67,9 +61,9 @@ type alias Model = { screen : Screen
                    , points : Int 
                    , jumpingPlayer : Player
                    , credentials : Credentials
-                   , userinfo : UserInfo
-                   , overallHighscore : UserInfo
-                   , settings : Settings
+                   , userinfo : UserInfo       
+                   , gameEnd : Bool
+                   , overallHighscore : OverallHighscore
                    } 
 
 --Need for server
@@ -77,10 +71,11 @@ type alias Credentials = { username : String
                          , password : String
                          }
 
-type alias UserInfo = { username : String
+type alias OverallHighscore = { username : String
                            , highscore : Int}
 
-type alias Settings = { username : String
+type alias UserInfo = { highscore : Int
+                      , gamesPlayed : Int
                       , playerTheme : ColorTheme 
                       , deviceTheme : ColorTheme
                       }
@@ -185,6 +180,15 @@ colorThemeToString colorTheme =
                 Theme4 -> "4" 
                 Theme5 -> "5"
 
+colorThemeToInt : ColorTheme -> Int
+colorThemeToInt colorTheme = 
+        case colorTheme of 
+                Theme1 -> 1
+                Theme2 -> 2
+                Theme3 -> 3
+                Theme4 -> 4 
+                Theme5 -> 5
+
 
 --textOutline (to avoid repetition)
 textOutline : String -> Float -> Shape userMsg
@@ -210,8 +214,8 @@ loginPost model =
         , expect = Http.expectString GotLoginResponse
         }
 
-logout : Cmd Msg 
-logout =
+logoutPost : Cmd Msg 
+logoutPost =
     Http.get 
         { url = rootUrl ++ "logoutuser/"
         , expect = Http.expectString GotLogoutResponse
@@ -225,98 +229,69 @@ signupPost model =
         , expect = Http.expectString GotSignupResponse
         }
 
---HIGHSCORE
-highscoreEncoder : String -> Int -> JEncode.Value 
-highscoreEncoder username highscore =
+--UserInfo
+userInfoEncoder : Model -> JEncode.Value 
+userInfoEncoder model =
     JEncode.object
-        [ ("username", JEncode.string username)
-        , ("highscore", JEncode.int highscore)
+        [ ("highscore", JEncode.int model.userinfo.highscore)
+          , ("gamesPlayed", JEncode.int model.userinfo.gamesPlayed)
+          , ("playerTheme", JEncode.string (colorThemeToString model.userinfo.playerTheme))
+          , ("deviceTheme", JEncode.string (colorThemeToString model.userinfo.deviceTheme))
         ]
-
-highscorePost : String -> Int -> Cmd Msg
-highscorePost username highscore =
+postUserInfo : Model -> Cmd Msg
+postUserInfo model = 
     Http.post
-        { url = rootUrl ++ "postuserhighscore/"
-        , body = Http.jsonBody <| highscoreEncoder username highscore
-        , expect = Http.expectString GotHighscoreResponse  
+        { url = rootUrl ++ "postuserinfo/"
+        , body = Http.jsonBody <| userInfoEncoder model
+        , expect = Http.expectString PostUserInfo
         }
 
-highscoreDecoder : JDecode.Decoder UserInfo  
-highscoreDecoder = 
-    JDecode.map2 UserInfo
-        (JDecode.field "username" JDecode.string)
+userInfoDecoder : JDecode.Decoder UserInfo  
+userInfoDecoder = 
+    JDecode.map4 UserInfo
         (JDecode.field "highscore" JDecode.int)
-
-getUserInfo : Model -> Cmd Msg 
-getUserInfo model =  
-    Http.post 
-        { url = rootUrl ++ "viewhighscore/"
-        , body = Http.jsonBody <| userPassEncoder model
-        , expect = Http.expectJson GetUserInfo highscoreDecoder
-        }
-
---Get overall highscore from server
-getOverallHighscore : Cmd Msg 
-getOverallHighscore =  
-    Http.get 
-        { url = rootUrl ++ "viewoverallhighscore/"
-        , expect = Http.expectJson GetOverallHighscore highscoreDecoder
-        }
-
---Settings 
-settingsEncoder : String -> ColorTheme -> ColorTheme -> JEncode.Value
-settingsEncoder username playerTheme deviceTheme = 
-    JEncode.object
-        [ ("username", JEncode.string username)
-        , ("playerTheme", JEncode.string (colorThemeToString playerTheme))
-        , ("deviceTheme", JEncode.string (colorThemeToString deviceTheme))
-        ]
-
-settingsPost : String -> ColorTheme -> ColorTheme -> Cmd Msg
-settingsPost username playerTheme deviceTheme =
-    Http.post
-        { url = rootUrl ++ "updatesettings/"
-        , body = Http.jsonBody <| settingsEncoder username playerTheme deviceTheme
-        , expect = Http.expectString GotSettingPostResponse
-        }
-
-settingsDecoder : JDecode.Decoder Settings 
-settingsDecoder =
-    JDecode.map3 Settings  
-        (JDecode.field "username" JDecode.string)
+        (JDecode.field "gamesPlayed" JDecode.int)
         (JDecode.field "playerTheme" decodeColorThemeType)
         (JDecode.field "deviceTheme" decodeColorThemeType)
 
 decodeColorThemeType : JDecode.Decoder ColorTheme   
 decodeColorThemeType = 
-    JDecode.int |> JDecode.andThen (\colorThemeTypeString ->
+    JDecode.string |> JDecode.andThen (\colorThemeTypeString ->
         case colorThemeTypeString of 
-            1 -> JDecode.succeed Theme1 
-            2 -> JDecode.succeed Theme2 
-            3 -> JDecode.succeed Theme3 
-            4 -> JDecode.succeed Theme4 
-            5 -> JDecode.succeed Theme5 
-            _ -> JDecode.succeed Theme1
+            "1" -> JDecode.succeed Theme1 
+            "2" -> JDecode.succeed Theme2 
+            "3" -> JDecode.succeed Theme3 
+            "4" -> JDecode.succeed Theme4 
+            "5" -> JDecode.succeed Theme5 
+            _ -> JDecode.succeed Theme5
     )
 
-getSettings : Model -> Cmd Msg
-getSettings model =
-    Http.post
-        { url = rootUrl ++ "getsettings/"
+getUserInfo : Model -> Cmd Msg 
+getUserInfo model =  
+    Http.post 
+        { url = rootUrl ++ "getuserinfo/"
         , body = Http.jsonBody <| userPassEncoder model
-        , expect = Http.expectJson GetSettings settingsDecoder
+        , expect = Http.expectJson GetUserInfo userInfoDecoder
         }
 
-updateGamesPlayed : Cmd Msg
-updateGamesPlayed =
-    Http.get
-        { url = rootUrl ++ "updategamesplayed/"
-        , expect = Http.expectString UpdateGamesPlayed
+
+--Get overall highscore from server
+getOverallHighscore : Cmd Msg 
+getOverallHighscore =  
+    Http.get 
+        { url = rootUrl ++ "getoverallhighscore/"
+        , expect = Http.expectJson GetOverallHighscore overallHighscoreDecoder
         }
+
+overallHighscoreDecoder : JDecode.Decoder OverallHighscore 
+overallHighscoreDecoder = 
+    JDecode.map2 OverallHighscore 
+        (JDecode.field "username" JDecode.string)
+        (JDecode.field "highscore" JDecode.int)
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-loginCmdMsg model = Cmd.batch [ getUserInfo model, getSettings model, getOverallHighscore]
--- gameEndCmdMosg model = Cmd.batch [highscorePost model.userinfo.username model.points]
+loginCmdMsg model = Cmd.batch [ getUserInfo model, getOverallHighscore]
+gameEndCmdMsg model = Cmd.batch [postUserInfo model, getOverallHighscore]
 
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
@@ -330,10 +305,10 @@ init flags url key =
                 , bigPlayer = Player2
                 , points = 0
                 , jumpingPlayer = None
+                , gameEnd = False
                 , credentials = {username = "", password = ""}
-                , userinfo= {username = "", highscore = 0}
+                , userinfo= {highscore = 0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
                 , overallHighscore = {username = "", highscore = 0}
-                , settings = {username = "", playerTheme = Theme1, deviceTheme = Theme1 }
                 }   
     in ( model , randDecideSize) -- add init model
 
@@ -374,16 +349,6 @@ update msg model = case Debug.log "msg" msg of
                                                 , player1_pos = updatePos (model.player1_pos) (2.5,-10)
                                                 , player2_pos = updatePos (model.player2_pos) (-2.5, getProjectile model.jumpX model.bigPlayer model.jumpingPlayer )
                                                 , count = model.count + 1 }
-                
-                restartModel = {model | player1_pos = (-114,-10)
-                                    , player2_pos = (114,-10) 
-                                    , count = 0
-                                    , jumpX = 1.5
-                                    , bigPlayer = None
-                                    , points = 0
-                                    , jumpingPlayer = None
-                                    , screen = Game InProgress
-                                    }
 
                 resetModel = {model | player1_pos = (-114,-10)
                                     , count = 0
@@ -395,16 +360,33 @@ update msg model = case Debug.log "msg" msg of
             in --CASE 1) if game over and player presses spacebar to restart
                 if model.screen == Login || model.screen == SignUp then (model,Cmd.none)
                 else if model.screen == Game Start  && restart == False then (model,Cmd.none)
-                else if restart && (model.screen == Game End || model.screen == Game Start) then (restartModel, Cmd.batch[randDecideSize, updateGamesPlayed])
+                else if restart && (model.screen == Game End || model.screen == Game Start) then 
+                    let
+                        oldUserInfo = model.userinfo 
+                        newUserInfo = { oldUserInfo | gamesPlayed = model.userinfo.gamesPlayed + 1}
+                        newModel = { model | player1_pos = (-114,-10)
+                                    , player2_pos = (114,-10) 
+                                    , count = 0
+                                    , jumpX = 1.5
+                                    , bigPlayer = None
+                                    , points = 0
+                                    , jumpingPlayer = None
+                                    , screen = Game InProgress
+                                    , gameEnd = False
+                                    , userinfo = newUserInfo }
+                    in (newModel, randDecideSize)
                 --CASE 2)if there's a collision, end game 
                 else if isCollision model then 
                     let
                         newHighscore = if model.points > model.userinfo.highscore then model.points else model.userinfo.highscore 
                         oldUserInfo = model.userinfo
                         newUserInfo= { oldUserInfo | highscore = newHighscore}
-                        message = if model.points > model.userinfo.highscore then highscorePost model.userinfo.username model.points else Cmd.none
+                        newModel = {model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo, gameEnd=True }
                     in
-                        ({model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo}, message) --sendHighscore model 
+                        if model.gameEnd == True then
+                            (model,Cmd.none)
+                        else
+                            (newModel, postUserInfo newModel) --sendHighscore model 
                 
                 --CASE 3) for 100 ticks, move players, after 100 ticks, reset to original position
                 else if model.count < 100 then
@@ -437,53 +419,35 @@ update msg model = case Debug.log "msg" msg of
                         , Cmd.none)
 
                 --CASE 4) if time == 2 seconds, reset to original position
-                else (resetModel, Cmd.batch[randDecideSize, getOverallHighscore])
+                else (resetModel, Cmd.batch[randDecideSize, Cmd.none])
         
         MakeRequest req    -> (model, Cmd.none)
         UrlChange url      -> (model, Cmd.none)
 
         DecideBigPlayer player -> ({model | bigPlayer = player}, Cmd.none) --where to put getoverall highscore lol NOTE!!
 
-        ChangeColorThemeRight -> 
-            let
-                oldSettings = model.settings
-                newTheme = changeThemeRight oldSettings.playerTheme
-                newSettings = {oldSettings | playerTheme = newTheme}
-                message = settingsPost model.settings.username newTheme model.settings.deviceTheme
-            in
-                ({model | settings = newSettings},message)
-        
-        ChangeColorThemeLeft ->             
-            let
-                oldSettings = model.settings
-                newTheme = changeThemeLeft oldSettings.playerTheme
-                newSettings = {oldSettings | playerTheme = newTheme}
-                message = settingsPost model.settings.username newTheme model.settings.deviceTheme
-            in
-                ({model | settings = newSettings}, message)
-        
-        ChangeDeviceColorUp -> 
-            let
-                oldSettings = model.settings
-                newTheme = changeThemeRight oldSettings.deviceTheme
-                newSettings = {oldSettings | deviceTheme = newTheme }
-                message = settingsPost model.settings.username model.settings.playerTheme newTheme
-            in
-                ({model | settings = newSettings}, message)
-
-        ChangeDeviceColorDown ->             
-            let
-                oldSettings = model.settings
-                newTheme = changeThemeLeft oldSettings.deviceTheme
-                newSettings = {oldSettings | deviceTheme = newTheme }
-                message = settingsPost model.settings.username model.settings.playerTheme newTheme
-            in
-                ({model | settings = newSettings}, message)
+        ChangeColorTheme button -> --ChangeColorThemeRight # case sdgadsg of asgsadgd do asdgasgs
+                let newTheme = 
+                        case button of
+                            ThemeUp -> changeThemeRight model.userinfo.deviceTheme
+                            ThemeDown -> changeThemeLeft model.userinfo.deviceTheme
+                            ThemeRight -> changeThemeRight model.userinfo.playerTheme
+                            ThemeLeft -> changeThemeLeft model.userinfo.playerTheme
+                in 
+                    if member button [ThemeUp, ThemeDown] then
+                        let oldUserInfo = model.userinfo
+                            newUserInfo = {oldUserInfo | deviceTheme = newTheme}
+                            newModel = {model | userinfo = newUserInfo}
+                        in ({model | userinfo = newUserInfo}, postUserInfo newModel)
+                    else 
+                        let oldUserInfo = model.userinfo
+                            newUserInfo = {oldUserInfo | playerTheme = newTheme}
+                        in ({model | userinfo = newUserInfo}, postUserInfo model)
 
         --Login
         LoginPost -> (model, loginPost model) --log in button
 
-        LogoutButton -> (model, logout)
+        LogoutPost -> (model, logoutPost)
         
         GotoSignUpScreen -> 
             let
@@ -505,12 +469,8 @@ update msg model = case Debug.log "msg" msg of
             let
                 oldCredentials = model.credentials
                 newCredentials = { oldCredentials | username = newUsername}
-                oldUserInfo = model.userinfo 
-                newUserInfo = {oldUserInfo | username = newUsername}
-                oldSettings = model.settings   
-                newSettings = {oldSettings | username = newUsername}
             in
-                ({model | credentials = newCredentials, userinfo = newUserInfo, settings = newSettings}, Cmd.none)
+                ({model | credentials = newCredentials}, Cmd.none)
 
         Password newPassword ->
             let
@@ -520,11 +480,14 @@ update msg model = case Debug.log "msg" msg of
                 ({model | credentials = newCredentials}, Cmd.none)
 
         --SERVER 
-        --Highscore
-        GotHighscoreResponse result ->
-            case result of
+        PostUserInfo result ->
+            case result of 
+                Ok "UpdatedUserInfo" ->
+                    ( model, getOverallHighscore)
+                Ok "UserIsNotLoggedIn" ->
+                    ( {model | error = "User Is Not Logged In"}, Cmd.none)
                 Ok _ -> 
-                    (model, Cmd.none) --cmd.none?
+                    (model, Cmd.none)
                 Err error ->
                     ( handleError model error, Cmd.none )
 
@@ -575,34 +538,11 @@ update msg model = case Debug.log "msg" msg of
                         oldCredentials= model.credentials
                         newCredentials= { oldCredentials | username = "", password = ""}
                         oldUserInfo = model.userinfo 
-                        newUserInfo = { oldUserInfo | username = "", highscore = 0}
-                        oldSettings = model.settings   
-                        newSettings = {oldSettings | username = "", playerTheme = Theme1, deviceTheme = Theme1}
+                        newUserInfo = { oldUserInfo | highscore = 0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
                     in
-                        ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, settings = newSettings, error = ""}, Cmd.none) --TODO: update logout post!!
+                        ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, error = ""}, Cmd.none) --TODO: update logout post!!
                 Ok _ -> ( {model | error = "something happened"}, Cmd.none)
                 Err error ->
-                    ( handleError model error, Cmd.none)
-
-
-        --Settings
-        GotSettingPostResponse result -> 
-            case result of 
-                Ok _ -> (model, Cmd.none)
-                Err error ->
-                    (handleError model error, Cmd.none)
-
-        GetSettings result ->
-            case result of 
-                Ok newModel ->
-                    ( {model | settings = newModel }, Cmd.none)
-                Err error -> 
-                    ( handleError model error, Cmd.none)
-                    
-        UpdateGamesPlayed result ->
-            case result of 
-                Ok _ -> (model, Cmd.none)
-                Err error -> 
                     ( handleError model error, Cmd.none)
 
 
@@ -662,6 +602,8 @@ view model =
                     ]
                 Game _ ->
                     [ gamebody, background, caption, points, startText, gameOver, overallHighscore, floor, player1, player2, logoutButton, themeButtons ] 
+
+
         togame = square 5
             |> filled green 
             |> notifyTap ToGame 
@@ -674,7 +616,7 @@ view model =
             |> bold 
             |> filled red 
             |> move (-39,-25) 
-
+        
         --Screen: LOGIN
         loginTitle = textOutline "Login" 12
             |> move (-18,40)
@@ -827,7 +769,7 @@ view model =
         highscorePoints = textOutline ("Your highscore is: " ++ String.fromInt model.userinfo.highscore ) 3
             |> move (-45,-52)
 
-        gamesPlayed = textOutline ("# Games Played: ") 3
+        gamesPlayed = textOutline ("# Games Played: " ++ String.fromInt model.userinfo.gamesPlayed) 3
             |> move (-45, -57)
 
         background = square 100
@@ -847,12 +789,12 @@ view model =
         player1_body = 
                 if model.bigPlayer == Player1 then
                         square 16
-                        |> filled (first (colorThemeToPlayerColor model.settings.playerTheme))
+                        |> filled (first (colorThemeToPlayerColor model.userinfo.playerTheme))
                         |> addOutline (solid 1) black
                         |> move (0.0,5.5)
                 else
                         square 8
-                        |> filled (first (colorThemeToPlayerColor model.settings.playerTheme))
+                        |> filled (first (colorThemeToPlayerColor model.userinfo.playerTheme))
                         |> addOutline (solid 1) black
                         |> move(0.0,1.5)
 
@@ -874,12 +816,12 @@ view model =
 
         player2_body = if model.bigPlayer == Player2 then 
                     square 16
-                    |> filled (second (colorThemeToPlayerColor model.settings.playerTheme))
+                    |> filled (second (colorThemeToPlayerColor model.userinfo.playerTheme))
                     |> addOutline (solid 1) black 
                     |> move (0.0,5.5)
                 else 
                     square 8
-                    |> filled (second (colorThemeToPlayerColor model.settings.playerTheme))
+                    |> filled (second (colorThemeToPlayerColor model.userinfo.playerTheme))
                     |> addOutline (solid 1) black 
                     |> move(0.0,1.5)
 
@@ -899,65 +841,28 @@ view model =
 
         --theme
         gamebody = roundedRect 100 148 5
-            |> (filled (first (colorThemeToDeviceColor model.settings.deviceTheme)))
+            |> (filled (first (colorThemeToDeviceColor model.userinfo.deviceTheme)))
             |> addOutline (solid 1) black 
 
-        themeButtons = group[themeLeft, leftTriangle, themeRight, rightTriangle, themeUp, upTriangle, themeDown, downTriangle]
-
-        rightTriangle = triangle 2
-            |> filled black 
-            |> move (36, -48)
-            |> notifyTap ChangeColorThemeRight
-                
-        leftTriangle = triangle 2
-            |> filled black 
-            |> mirrorX
-            |> move (21,-48)
-            |> notifyTap ChangeColorThemeLeft
-
-        upTriangle = triangle 2
-            |> filled black 
-            |> rotate (3.14/2)
-            |> move (28.5,-40)
-            |> notifyTap ChangeDeviceColorUp
-
-        downTriangle = triangle 2
-            |> filled black 
-            |> rotate (3.14/2)
-            |> mirrorY
-            |> move (28.5,-56)
-            |> notifyTap ChangeDeviceColorDown
-
-        themeRight = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
-            |> addOutline(solid 0.7) black 
-            |> move (36,-48)
-            |> notifyTap ChangeColorThemeRight
-
-        themeLeft = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
-            |> addOutline(solid 0.7) black 
-            |> move (21,-48)
-            |> notifyTap ChangeColorThemeLeft
-
-        themeUp = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
-            |> addOutline(solid 0.7) black 
-            |> move (28.5,-40)
-            |> notifyTap ChangeDeviceColorUp
-
-        themeDown = circle 4
-            |> (filled (second (colorThemeToDeviceColor model.settings.deviceTheme)))
-            |> addOutline(solid 0.7) black 
-            |> move (28.5,-56)
-            |> notifyTap ChangeDeviceColorDown
-
+        themeButtons = group[ --UpButton
+                              circle 4 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme))) |> addOutline(solid 0.7) black |> move (28.5,-40) |> notifyTap (ChangeColorTheme ThemeUp)
+                            , triangle 2 |> filled black |> rotate (3.14/2)|> move (28.5,-40) |> (notifyTap (ChangeColorTheme ThemeUp))
+                             -- DownButton
+                            , circle 4 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))|> addOutline(solid 0.7) black |> move (28.5,-56) |> notifyTap (ChangeColorTheme ThemeDown)
+                            , triangle 2 |> filled black |> rotate (3.14/2) |> mirrorY |> move (28.5,-56) |> notifyTap (ChangeColorTheme ThemeDown)
+                             -- RightButton
+                            ,  circle 4 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme))) |> addOutline(solid 0.7) black |> move (36,-48) |> notifyTap (ChangeColorTheme ThemeRight)
+                            , triangle 2 |> filled black |> move (36, -48) |> notifyTap (ChangeColorTheme ThemeRight)
+                            -- LeftButton
+                            , circle 4 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme))) |> addOutline(solid 0.7) black  |> move (21,-48) |> notifyTap (ChangeColorTheme ThemeLeft)
+                            , triangle 2 |> filled black |> mirrorX |> move (21,-48) |> notifyTap (ChangeColorTheme ThemeLeft)
+                            ]
 
         --logout
         logoutButton = group [logoutShape,logoutText]
             |> move (41,-96)
             |> scale 0.7
-            |> notifyTap LogoutButton
+            |> notifyTap LogoutPost
 
         logoutShape = roundedRect 30 10 2
             |> filled (rgb 212 53 79)
