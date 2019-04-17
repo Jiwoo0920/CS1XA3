@@ -58,7 +58,6 @@ type alias Model = { screen : Screen
                    , count : Int
                    , jumpX : Float
                    , bigPlayer : Player
-                   , points : Int 
                    , jumpingPlayer : Player
                    , credentials : Credentials
                    , userinfo : UserInfo       
@@ -75,6 +74,8 @@ type alias OverallHighscore = { username : String
                            , highscore : Int}
 
 type alias UserInfo = { highscore : Int
+                      , points : Int
+                      , avgPoints : Float
                       , gamesPlayed : Int
                       , playerTheme : ColorTheme 
                       , deviceTheme : ColorTheme
@@ -233,8 +234,9 @@ signupPost model =
 userInfoEncoder : Model -> JEncode.Value 
 userInfoEncoder model =
     JEncode.object
-        [ ("highscore", JEncode.int model.userinfo.highscore)
+        [  ("highscore", JEncode.int model.userinfo.highscore)
           , ("gamesPlayed", JEncode.int model.userinfo.gamesPlayed)
+          , ("points", JEncode.int model.userinfo.points)
           , ("playerTheme", JEncode.string (colorThemeToString model.userinfo.playerTheme))
           , ("deviceTheme", JEncode.string (colorThemeToString model.userinfo.deviceTheme))
         ]
@@ -248,8 +250,10 @@ postUserInfo model =
 
 userInfoDecoder : JDecode.Decoder UserInfo  
 userInfoDecoder = 
-    JDecode.map4 UserInfo
+    JDecode.map6 UserInfo
         (JDecode.field "highscore" JDecode.int)
+        (JDecode.field "points" JDecode.int)
+        (JDecode.field "avgPoints" JDecode.float)
         (JDecode.field "gamesPlayed" JDecode.int)
         (JDecode.field "playerTheme" decodeColorThemeType)
         (JDecode.field "deviceTheme" decodeColorThemeType)
@@ -291,7 +295,7 @@ overallHighscoreDecoder =
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 loginCmdMsg model = Cmd.batch [ getUserInfo model, getOverallHighscore]
-gameEndCmdMsg model = Cmd.batch [postUserInfo model, getOverallHighscore]
+gameEndCmdMsg model = Cmd.batch [postUserInfo model, getUserInfo model, getOverallHighscore]
 
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
@@ -303,11 +307,10 @@ init flags url key =
                 , count = 0
                 , jumpX = 1.5
                 , bigPlayer = Player2
-                , points = 0
                 , jumpingPlayer = None
                 , gameEnd = False
                 , credentials = {username = "", password = ""}
-                , userinfo= {highscore = 0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
+                , userinfo= {highscore = 0, points = 0, avgPoints = 0.0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
                 , overallHighscore = {username = "", highscore = 0}
                 }   
     in ( model , randDecideSize) -- add init model
@@ -350,12 +353,14 @@ update msg model = case Debug.log "msg" msg of
                                                 , player2_pos = updatePos (model.player2_pos) (-2.5, getProjectile model.jumpX model.bigPlayer model.jumpingPlayer )
                                                 , count = model.count + 1 }
 
-                resetModel = {model | player1_pos = (-114,-10)
+                resetModel = let oldUserInfo = model.userinfo 
+                                 newUserInfo = { oldUserInfo | points = model.userinfo.points + 1}
+                             in {model | player1_pos = (-114,-10)
                                     , count = 0
                                     , jumpingPlayer = None 
                                     , jumpX = 0
                                     , player2_pos = (114,-10)
-                                    , points = model.points + 1}
+                                    , userinfo = newUserInfo}
 
             in --CASE 1) if game over and player presses spacebar to restart
                 if model.screen == Login || model.screen == SignUp then (model,Cmd.none)
@@ -363,13 +368,12 @@ update msg model = case Debug.log "msg" msg of
                 else if restart && (model.screen == Game End || model.screen == Game Start) then 
                     let
                         oldUserInfo = model.userinfo 
-                        newUserInfo = { oldUserInfo | gamesPlayed = model.userinfo.gamesPlayed + 1}
+                        newUserInfo = { oldUserInfo | gamesPlayed = model.userinfo.gamesPlayed + 1, points = 0}
                         newModel = { model | player1_pos = (-114,-10)
                                     , player2_pos = (114,-10) 
                                     , count = 0
                                     , jumpX = 1.5
                                     , bigPlayer = None
-                                    , points = 0
                                     , jumpingPlayer = None
                                     , screen = Game InProgress
                                     , gameEnd = False
@@ -378,7 +382,7 @@ update msg model = case Debug.log "msg" msg of
                 --CASE 2)if there's a collision, end game 
                 else if isCollision model then 
                     let
-                        newHighscore = if model.points > model.userinfo.highscore then model.points else model.userinfo.highscore 
+                        newHighscore = if model.userinfo.points > model.userinfo.highscore then model.userinfo.points else model.userinfo.highscore 
                         oldUserInfo = model.userinfo
                         newUserInfo= { oldUserInfo | highscore = newHighscore}
                         newModel = {model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo, gameEnd=True }
@@ -442,7 +446,8 @@ update msg model = case Debug.log "msg" msg of
                     else 
                         let oldUserInfo = model.userinfo
                             newUserInfo = {oldUserInfo | playerTheme = newTheme}
-                        in ({model | userinfo = newUserInfo}, postUserInfo model)
+                            newModel = {model | userinfo = newUserInfo}
+                        in (newModel, postUserInfo newModel)
 
         --Login
         LoginPost -> (model, loginPost model) --log in button
@@ -483,7 +488,7 @@ update msg model = case Debug.log "msg" msg of
         PostUserInfo result ->
             case result of 
                 Ok "UpdatedUserInfo" ->
-                    ( model, getOverallHighscore)
+                    ( model, Cmd.batch[getOverallHighscore,getUserInfo model])
                 Ok "UserIsNotLoggedIn" ->
                     ( {model | error = "User Is Not Logged In"}, Cmd.none)
                 Ok _ -> 
@@ -538,7 +543,7 @@ update msg model = case Debug.log "msg" msg of
                         oldCredentials= model.credentials
                         newCredentials= { oldCredentials | username = "", password = ""}
                         oldUserInfo = model.userinfo 
-                        newUserInfo = { oldUserInfo | highscore = 0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
+                        newUserInfo = { oldUserInfo | highscore = 0, points = 0, avgPoints = 0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
                     in
                         ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, error = ""}, Cmd.none) --TODO: update logout post!!
                 Ok _ -> ( {model | error = "something happened"}, Cmd.none)
@@ -602,6 +607,7 @@ view model =
                     ]
                 Game _ ->
                     [ gamebody, background, caption, points, startText, gameOver, overallHighscore, floor, player1, player2, logoutButton, themeButtons ] 
+
 
 
         togame = square 5
@@ -697,7 +703,7 @@ view model =
         caption = textOutline "Clash!" 10
             |> move (-13,54)
 
-        points = GraphicSVG.text ("Points: " ++ (String.fromInt model.points)) 
+        points = GraphicSVG.text ("Points: " ++ (String.fromInt model.userinfo.points)) 
             |> sansserif
             |> bold 
             |> size 4
@@ -752,7 +758,7 @@ view model =
 
         -- highScoreBoard = group [highScore, user, highscorePoints]
 
-        overallHighscore = group [highscoreShape, highScore, user, highscorePoints, gamesPlayed]
+        overallHighscore = group [highscoreShape, highScore, user, highscorePoints, gamesPlayed, avgPoints]
             |> move (3,-3)
 
         highscoreShape = roundedRect 47 33 2
@@ -771,6 +777,9 @@ view model =
 
         gamesPlayed = textOutline ("# Games Played: " ++ String.fromInt model.userinfo.gamesPlayed) 3
             |> move (-45, -57)
+
+        avgPoints = textOutline ("Avg Points: " ++ String.fromFloat model.userinfo.avgPoints ) 3
+            |> move (-45, -62)
 
         background = square 100
             |> filled (rgb 214 244 255)

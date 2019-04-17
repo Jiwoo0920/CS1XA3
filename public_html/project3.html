@@ -8940,9 +8940,8 @@ var author$project$Main$init = F3(
 			overallHighscore: {highscore: 0, username: ''},
 			player1_pos: _Utils_Tuple2(-30, -10),
 			player2_pos: _Utils_Tuple2(30, -10),
-			points: 0,
 			screen: author$project$Main$Login,
-			userinfo: {deviceTheme: author$project$Main$Theme1, gamesPlayed: 0, highscore: 0, playerTheme: author$project$Main$Theme1}
+			userinfo: {avgPoints: 0.0, deviceTheme: author$project$Main$Theme1, gamesPlayed: 0, highscore: 0, playerTheme: author$project$Main$Theme1, points: 0}
 		};
 		return _Utils_Tuple2(model, author$project$Main$randDecideSize);
 	});
@@ -9660,6 +9659,88 @@ var author$project$Main$getProjectile = F3(
 			2));
 		return (elm$core$Basics$tan(angle) * x) - (blob * A2(elm$core$Basics$pow, x, 2));
 	});
+var author$project$Main$GetUserInfo = function (a) {
+	return {$: 'GetUserInfo', a: a};
+};
+var author$project$Main$UserInfo = F6(
+	function (highscore, points, avgPoints, gamesPlayed, playerTheme, deviceTheme) {
+		return {avgPoints: avgPoints, deviceTheme: deviceTheme, gamesPlayed: gamesPlayed, highscore: highscore, playerTheme: playerTheme, points: points};
+	});
+var elm$json$Json$Decode$andThen = _Json_andThen;
+var author$project$Main$decodeColorThemeType = A2(
+	elm$json$Json$Decode$andThen,
+	function (colorThemeTypeString) {
+		switch (colorThemeTypeString) {
+			case '1':
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme1);
+			case '2':
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme2);
+			case '3':
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme3);
+			case '4':
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme4);
+			case '5':
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme5);
+			default:
+				return elm$json$Json$Decode$succeed(author$project$Main$Theme5);
+		}
+	},
+	elm$json$Json$Decode$string);
+var elm$json$Json$Decode$map6 = _Json_map6;
+var author$project$Main$userInfoDecoder = A7(
+	elm$json$Json$Decode$map6,
+	author$project$Main$UserInfo,
+	A2(elm$json$Json$Decode$field, 'highscore', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'points', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'avgPoints', elm$json$Json$Decode$float),
+	A2(elm$json$Json$Decode$field, 'gamesPlayed', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'playerTheme', author$project$Main$decodeColorThemeType),
+	A2(elm$json$Json$Decode$field, 'deviceTheme', author$project$Main$decodeColorThemeType));
+var elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			elm$core$List$foldl,
+			F2(
+				function (_n0, obj) {
+					var k = _n0.a;
+					var v = _n0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var elm$json$Json$Encode$string = _Json_wrap;
+var author$project$Main$userPassEncoder = function (model) {
+	return elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'username',
+				elm$json$Json$Encode$string(model.credentials.username)),
+				_Utils_Tuple2(
+				'password',
+				elm$json$Json$Encode$string(model.credentials.password))
+			]));
+};
+var elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2(elm$json$Json$Encode$encode, 0, value));
+};
+var elm$http$Http$post = function (r) {
+	return elm$http$Http$request(
+		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
+};
+var author$project$Main$getUserInfo = function (model) {
+	return elm$http$Http$post(
+		{
+			body: elm$http$Http$jsonBody(
+				author$project$Main$userPassEncoder(model)),
+			expect: A2(elm$http$Http$expectJson, author$project$Main$GetUserInfo, author$project$Main$userInfoDecoder),
+			url: author$project$Main$rootUrl + 'getuserinfo/'
+		});
+};
 var author$project$Main$handleError = F2(
 	function (model, error) {
 		switch (error.$) {
@@ -9736,86 +9817,6 @@ var author$project$Main$playerMatch = F2(
 var author$project$Main$isCollision = function (model) {
 	return A2(author$project$Main$playerMatch, model.bigPlayer, model.jumpingPlayer) ? A2(author$project$Main$isCollisionBigOnSmall, model.player1_pos, model.player2_pos) : ((!A2(author$project$Main$playerMatch, model.bigPlayer, model.jumpingPlayer)) ? A2(author$project$Main$isCollisionSmallOnBig, model.player1_pos, model.player2_pos) : A2(author$project$Main$isCollisionNoJump, model.player1_pos, model.player2_pos));
 };
-var author$project$Main$GetUserInfo = function (a) {
-	return {$: 'GetUserInfo', a: a};
-};
-var author$project$Main$UserInfo = F4(
-	function (highscore, gamesPlayed, playerTheme, deviceTheme) {
-		return {deviceTheme: deviceTheme, gamesPlayed: gamesPlayed, highscore: highscore, playerTheme: playerTheme};
-	});
-var elm$json$Json$Decode$andThen = _Json_andThen;
-var author$project$Main$decodeColorThemeType = A2(
-	elm$json$Json$Decode$andThen,
-	function (colorThemeTypeString) {
-		switch (colorThemeTypeString) {
-			case '1':
-				return elm$json$Json$Decode$succeed(author$project$Main$Theme1);
-			case '2':
-				return elm$json$Json$Decode$succeed(author$project$Main$Theme2);
-			case '3':
-				return elm$json$Json$Decode$succeed(author$project$Main$Theme3);
-			case '4':
-				return elm$json$Json$Decode$succeed(author$project$Main$Theme4);
-			case '5':
-				return elm$json$Json$Decode$succeed(author$project$Main$Theme5);
-			default:
-				return elm$json$Json$Decode$succeed(author$project$Main$Theme5);
-		}
-	},
-	elm$json$Json$Decode$string);
-var elm$json$Json$Decode$map4 = _Json_map4;
-var author$project$Main$userInfoDecoder = A5(
-	elm$json$Json$Decode$map4,
-	author$project$Main$UserInfo,
-	A2(elm$json$Json$Decode$field, 'highscore', elm$json$Json$Decode$int),
-	A2(elm$json$Json$Decode$field, 'gamesPlayed', elm$json$Json$Decode$int),
-	A2(elm$json$Json$Decode$field, 'playerTheme', author$project$Main$decodeColorThemeType),
-	A2(elm$json$Json$Decode$field, 'deviceTheme', author$project$Main$decodeColorThemeType));
-var elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			elm$core$List$foldl,
-			F2(
-				function (_n0, obj) {
-					var k = _n0.a;
-					var v = _n0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
-var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$userPassEncoder = function (model) {
-	return elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'username',
-				elm$json$Json$Encode$string(model.credentials.username)),
-				_Utils_Tuple2(
-				'password',
-				elm$json$Json$Encode$string(model.credentials.password))
-			]));
-};
-var elm$http$Http$jsonBody = function (value) {
-	return A2(
-		_Http_pair,
-		'application/json',
-		A2(elm$json$Json$Encode$encode, 0, value));
-};
-var elm$http$Http$post = function (r) {
-	return elm$http$Http$request(
-		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
-};
-var author$project$Main$getUserInfo = function (model) {
-	return elm$http$Http$post(
-		{
-			body: elm$http$Http$jsonBody(
-				author$project$Main$userPassEncoder(model)),
-			expect: A2(elm$http$Http$expectJson, author$project$Main$GetUserInfo, author$project$Main$userInfoDecoder),
-			url: author$project$Main$rootUrl + 'getuserinfo/'
-		});
-};
 var author$project$Main$loginCmdMsg = function (model) {
 	return elm$core$Platform$Cmd$batch(
 		_List_fromArray(
@@ -9878,6 +9879,9 @@ var author$project$Main$userInfoEncoder = function (model) {
 				_Utils_Tuple2(
 				'gamesPlayed',
 				elm$json$Json$Encode$int(model.userinfo.gamesPlayed)),
+				_Utils_Tuple2(
+				'points',
+				elm$json$Json$Encode$int(model.userinfo.points)),
 				_Utils_Tuple2(
 				'playerTheme',
 				elm$json$Json$Encode$string(
@@ -9949,16 +9953,22 @@ var author$project$Main$update = F2(
 						return false;
 					}
 				}();
-				var resetModel = _Utils_update(
-					model,
-					{
-						count: 0,
-						jumpX: 0,
-						jumpingPlayer: author$project$Main$None,
-						player1_pos: _Utils_Tuple2(-114, -10),
-						player2_pos: _Utils_Tuple2(114, -10),
-						points: model.points + 1
-					});
+				var resetModel = function () {
+					var oldUserInfo = model.userinfo;
+					var newUserInfo = _Utils_update(
+						oldUserInfo,
+						{points: model.userinfo.points + 1});
+					return _Utils_update(
+						model,
+						{
+							count: 0,
+							jumpX: 0,
+							jumpingPlayer: author$project$Main$None,
+							player1_pos: _Utils_Tuple2(-114, -10),
+							player2_pos: _Utils_Tuple2(114, -10),
+							userinfo: newUserInfo
+						});
+				}();
 				var player2_jumpingModel = _Utils_update(
 					model,
 					{
@@ -10047,7 +10057,7 @@ var author$project$Main$update = F2(
 							var oldUserInfo = model.userinfo;
 							var newUserInfo = _Utils_update(
 								oldUserInfo,
-								{gamesPlayed: model.userinfo.gamesPlayed + 1});
+								{gamesPlayed: model.userinfo.gamesPlayed + 1, points: 0});
 							var newModel = _Utils_update(
 								model,
 								{
@@ -10058,7 +10068,6 @@ var author$project$Main$update = F2(
 									jumpingPlayer: author$project$Main$None,
 									player1_pos: _Utils_Tuple2(-114, -10),
 									player2_pos: _Utils_Tuple2(114, -10),
-									points: 0,
 									screen: author$project$Main$Game(author$project$Main$InProgress),
 									userinfo: newUserInfo
 								});
@@ -10066,7 +10075,7 @@ var author$project$Main$update = F2(
 						} else {
 							if (author$project$Main$isCollision(model)) {
 								var oldUserInfo = model.userinfo;
-								var newHighscore = (_Utils_cmp(model.points, model.userinfo.highscore) > 0) ? model.points : model.userinfo.highscore;
+								var newHighscore = (_Utils_cmp(model.userinfo.points, model.userinfo.highscore) > 0) ? model.userinfo.points : model.userinfo.highscore;
 								var newUserInfo = _Utils_update(
 									oldUserInfo,
 									{highscore: newHighscore});
@@ -10164,11 +10173,12 @@ var author$project$Main$update = F2(
 					var newUserInfo = _Utils_update(
 						oldUserInfo,
 						{playerTheme: newTheme});
+					var newModel = _Utils_update(
+						model,
+						{userinfo: newUserInfo});
 					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{userinfo: newUserInfo}),
-						author$project$Main$postUserInfo(model));
+						newModel,
+						author$project$Main$postUserInfo(newModel));
 				}
 			case 'LoginPost':
 				return _Utils_Tuple2(
@@ -10227,7 +10237,14 @@ var author$project$Main$update = F2(
 				if (result.$ === 'Ok') {
 					switch (result.a) {
 						case 'UpdatedUserInfo':
-							return _Utils_Tuple2(model, author$project$Main$getOverallHighscore);
+							return _Utils_Tuple2(
+								model,
+								elm$core$Platform$Cmd$batch(
+									_List_fromArray(
+										[
+											author$project$Main$getOverallHighscore,
+											author$project$Main$getUserInfo(model)
+										])));
 						case 'UserIsNotLoggedIn':
 							return _Utils_Tuple2(
 								_Utils_update(
@@ -10345,7 +10362,7 @@ var author$project$Main$update = F2(
 						var oldCredentials = model.credentials;
 						var newUserInfo = _Utils_update(
 							oldUserInfo,
-							{deviceTheme: author$project$Main$Theme1, gamesPlayed: 0, highscore: 0, playerTheme: author$project$Main$Theme1});
+							{avgPoints: 0, deviceTheme: author$project$Main$Theme1, gamesPlayed: 0, highscore: 0, playerTheme: author$project$Main$Theme1, points: 0});
 						var newCredentials = _Utils_update(
 							oldCredentials,
 							{password: '', username: ''});
@@ -11176,7 +11193,7 @@ var author$project$Main$view = function (model) {
 				MacCASOutreach$graphicsvg$GraphicSVG$bold(
 					MacCASOutreach$graphicsvg$GraphicSVG$sansserif(
 						MacCASOutreach$graphicsvg$GraphicSVG$text(
-							'Points: ' + elm$core$String$fromInt(model.points)))))));
+							'Points: ' + elm$core$String$fromInt(model.userinfo.points)))))));
 	var player2_eye = _Utils_eq(model.bigPlayer, author$project$Main$Player2) ? A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$rotate,
 		0.7,
@@ -11478,12 +11495,6 @@ var author$project$Main$view = function (model) {
 			author$project$Main$textOutline,
 			'# Games Played: ' + elm$core$String$fromInt(model.userinfo.gamesPlayed),
 			3));
-	var overallHighscore = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(3, -3),
-		MacCASOutreach$graphicsvg$GraphicSVG$group(
-			_List_fromArray(
-				[highscoreShape, highScore, user, highscorePoints, gamesPlayed])));
 	var gamebody = A3(
 		MacCASOutreach$graphicsvg$GraphicSVG$addOutline,
 		MacCASOutreach$graphicsvg$GraphicSVG$solid(1),
@@ -11560,6 +11571,19 @@ var author$project$Main$view = function (model) {
 				MacCASOutreach$graphicsvg$GraphicSVG$filled,
 				A3(MacCASOutreach$graphicsvg$GraphicSVG$rgb, 214, 244, 255),
 				MacCASOutreach$graphicsvg$GraphicSVG$square(100))));
+	var avgPoints = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(-45, -62),
+		A2(
+			author$project$Main$textOutline,
+			'Avg Points: ' + elm$core$String$fromFloat(model.userinfo.avgPoints),
+			3));
+	var overallHighscore = A2(
+		MacCASOutreach$graphicsvg$GraphicSVG$move,
+		_Utils_Tuple2(3, -3),
+		MacCASOutreach$graphicsvg$GraphicSVG$group(
+			_List_fromArray(
+				[highscoreShape, highScore, user, highscorePoints, gamesPlayed, avgPoints])));
 	var shapes = function () {
 		var _n0 = model.screen;
 		switch (_n0.$) {

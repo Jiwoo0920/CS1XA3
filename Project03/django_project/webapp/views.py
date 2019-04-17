@@ -12,7 +12,7 @@ def sign_up(request):
         passw = json_req.get('password','')
         if uname != '' and passw != '':
                 user = User.objects.create_user(username=uname, password=passw)
-                userinfo = UserInfo.objects.create(user=user,highscore=0,playerTheme=1,deviceTheme=1)
+                userinfo = UserInfo.objects.create(user=user)
                 user.save()
                 userinfo.save()
                 login(request,user)
@@ -42,6 +42,7 @@ def postUserInfo(request):
 	json_req = json.loads(request.body.decode('utf-8'))
 	print("print:"+str(json_req))
 	highscore = json_req.get('highscore',0)
+	points = json_req.get('points',0)
 	gamesPlayed = json_req.get('gamesPlayed',0)
 	playerTheme = json_req.get('playerTheme','1')
 	deviceTheme = json_req.get('deviceTheme','1')
@@ -52,6 +53,7 @@ def postUserInfo(request):
 		if highscore > userinfo.highscore:
 			userinfo.highscore = highscore
 		userinfo.gamesPlayed = gamesPlayed
+		userinfo.totalPoints +=points
 		userinfo.playerTheme = playerTheme
 		userinfo.deviceTheme = deviceTheme
 		userinfo.save()
@@ -67,6 +69,8 @@ def getUserInfo(request):
 		userhighscore = userinfo.highscore
 		respDict = {}
 		respDict['highscore'] = userinfo.highscore
+		respDict['points'] = 0
+		respDict['avgPoints'] = round((userinfo.totalPoints/userinfo.gamesPlayed),5)
 		respDict['gamesPlayed'] = userinfo.gamesPlayed
 		respDict['playerTheme'] = userinfo.playerTheme
 		respDict['deviceTheme'] = userinfo.deviceTheme
