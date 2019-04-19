@@ -8,18 +8,22 @@ from django.utils import timezone
 
 #Login/Signup
 def sign_up(request):
-        json_req = json.loads(request.body)
-        uname = json_req.get('username','')
-        passw = json_req.get('password','')
-        if uname != '' and passw != '':
-                user = User.objects.create_user(username=uname, password=passw)
-                userinfo = UserInfo.objects.create(user=user)
-                user.save()
-                userinfo.save()
-                login(request,user)
-                return HttpResponse('SignupSuccess') 
-        else:
-                return HttpResponse('SignupFail')
+	json_req = json.loads(request.body)
+	uname = json_req.get('username','')
+	passw = json_req.get('password','')
+	if uname != '' and passw != '':
+		userCheck = User.objects.get(username=uname)
+		if userCheck is not None:
+			return HttpResponse('UserAlreadyExists')
+		else:
+			user = User.objects.create_user(username=uname, password=passw)
+			userinfo = UserInfo.objects.create(user=user)
+			user.save()
+			userinfo.save()
+			login(request,user)
+			return HttpResponse('SignupSuccess')
+	else:
+		return HttpResponse('SignupFail')
 
 def login_user(request):
         json_req = json.loads(request.body.decode('utf-8'))
@@ -97,7 +101,6 @@ def getOverallHighscore(request):
 
 def getLeaderBoard(request):
 	top5_UserInfo = UserInfo.objects.order_by('-highscore','updatedTime')[:5]
-	print("top5:"+str(top5_UserInfo))
 	respDict = {}
 	keys = ["firstPlace","secondPlace","thirdPlace","fourthPlace","fifthPlace"]
 	for i in range (len(top5_UserInfo)):

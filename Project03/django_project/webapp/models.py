@@ -7,8 +7,7 @@ from django.utils.timezone import now
 class UserInfoManager(models.Manager):
 	def create_user_info(self, username, password, highscore, playerTheme, deviceTheme):
 		user = User.objects.create_user(username=username, password=password)
-#		userinfo = UserInfo.objects.create(user=user, highscore=highscore)
-		userinfo = self.create(user=user,highscore=highscore, playerTheme=playerTheme, deviceTheme=deviceTheme)
+		userinfo = self.create(user=user)
 		return userinfo
 
 class UserInfo(models.Model):
@@ -23,4 +22,4 @@ class UserInfo(models.Model):
 	averagePoints = models.FloatField(default=0.0)
 	objects = UserInfoManager()
 
-	
+
