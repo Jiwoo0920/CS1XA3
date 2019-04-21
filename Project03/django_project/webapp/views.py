@@ -12,16 +12,15 @@ def sign_up(request):
 	uname = json_req.get('username','')
 	passw = json_req.get('password','')
 	if uname != '' and passw != '':
-		userCheck = User.objects.get(username=uname)
-		if userCheck is not None:
-			return HttpResponse('UserAlreadyExists')
-		else:
+		try:
 			user = User.objects.create_user(username=uname, password=passw)
 			userinfo = UserInfo.objects.create(user=user)
 			user.save()
 			userinfo.save()
 			login(request,user)
 			return HttpResponse('SignupSuccess')
+		except:
+			return HttpResponse('UserAlreadyExists')
 	else:
 		return HttpResponse('SignupFail')
 

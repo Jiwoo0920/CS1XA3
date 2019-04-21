@@ -9725,51 +9725,11 @@ var author$project$Main$userInfoDecoder = A7(
 	A2(elm$json$Json$Decode$field, 'gamesPlayed', elm$json$Json$Decode$int),
 	A2(elm$json$Json$Decode$field, 'playerTheme', author$project$Main$decodeColorThemeType),
 	A2(elm$json$Json$Decode$field, 'deviceTheme', author$project$Main$decodeColorThemeType));
-var elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			elm$core$List$foldl,
-			F2(
-				function (_n0, obj) {
-					var k = _n0.a;
-					var v = _n0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
-var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$userPassEncoder = function (model) {
-	return elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'username',
-				elm$json$Json$Encode$string(model.credentials.username)),
-				_Utils_Tuple2(
-				'password',
-				elm$json$Json$Encode$string(model.credentials.password))
-			]));
-};
-var elm$http$Http$jsonBody = function (value) {
-	return A2(
-		_Http_pair,
-		'application/json',
-		A2(elm$json$Json$Encode$encode, 0, value));
-};
-var elm$http$Http$post = function (r) {
-	return elm$http$Http$request(
-		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
-};
-var author$project$Main$getUserInfo = function (model) {
-	return elm$http$Http$post(
-		{
-			body: elm$http$Http$jsonBody(
-				author$project$Main$userPassEncoder(model)),
-			expect: A2(elm$http$Http$expectJson, author$project$Main$GetUserInfo, author$project$Main$userInfoDecoder),
-			url: author$project$Main$rootUrl + 'getuserinfo/'
-		});
-};
+var author$project$Main$getUserInfo = elm$http$Http$get(
+	{
+		expect: A2(elm$http$Http$expectJson, author$project$Main$GetUserInfo, author$project$Main$userInfoDecoder),
+		url: author$project$Main$rootUrl + 'getuserinfo/'
+	});
 var author$project$Main$handleError = F2(
 	function (model, error) {
 		switch (error.$) {
@@ -9849,19 +9809,52 @@ var author$project$Main$isCollision = function (model) {
 var author$project$Main$loginCmdMsg = function (model) {
 	return elm$core$Platform$Cmd$batch(
 		_List_fromArray(
-			[
-				author$project$Main$getUserInfo(model),
-				author$project$Main$getOverallHighscore
-			]));
+			[author$project$Main$getUserInfo, author$project$Main$getOverallHighscore]));
 };
 var author$project$Main$GotLoginResponse = function (a) {
 	return {$: 'GotLoginResponse', a: a};
+};
+var elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			elm$core$List$foldl,
+			F2(
+				function (_n0, obj) {
+					var k = _n0.a;
+					var v = _n0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var elm$json$Json$Encode$string = _Json_wrap;
+var author$project$Main$userPassEncoder = function (model) {
+	return elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'username',
+				elm$json$Json$Encode$string(model.credentials.username)),
+				_Utils_Tuple2(
+				'password',
+				elm$json$Json$Encode$string(model.credentials.password))
+			]));
 };
 var elm$http$Http$expectString = function (toMsg) {
 	return A2(
 		elm$http$Http$expectStringResponse,
 		toMsg,
 		elm$http$Http$resolve(elm$core$Result$Ok));
+};
+var elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2(elm$json$Json$Encode$encode, 0, value));
+};
+var elm$http$Http$post = function (r) {
+	return elm$http$Http$request(
+		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
 var author$project$Main$loginPost = function (model) {
 	return elm$http$Http$post(
@@ -9906,11 +9899,11 @@ var author$project$Main$userInfoEncoder = function (model) {
 				'highscore',
 				elm$json$Json$Encode$int(model.userinfo.highscore)),
 				_Utils_Tuple2(
-				'gamesPlayed',
-				elm$json$Json$Encode$int(model.userinfo.gamesPlayed)),
-				_Utils_Tuple2(
 				'points',
 				elm$json$Json$Encode$int(model.userinfo.points)),
+				_Utils_Tuple2(
+				'gamesPlayed',
+				elm$json$Json$Encode$int(model.userinfo.gamesPlayed)),
 				_Utils_Tuple2(
 				'playerTheme',
 				elm$json$Json$Encode$string(
@@ -10283,10 +10276,7 @@ var author$project$Main$update = F2(
 								model,
 								elm$core$Platform$Cmd$batch(
 									_List_fromArray(
-										[
-											author$project$Main$getOverallHighscore,
-											author$project$Main$getUserInfo(model)
-										])));
+										[author$project$Main$getOverallHighscore, author$project$Main$getUserInfo])));
 						case 'UserIsNotLoggedIn':
 							return _Utils_Tuple2(
 								_Utils_update(

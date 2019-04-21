@@ -38,6 +38,7 @@ type Msg = Tick Float GetKeyState
          | PostUserInfo (Result Http.Error String) 
          | GetUserInfo (Result Http.Error UserInfo)
          | GetOverallHighscore (Result Http.Error Highscore)
+         | GetLeaderBoard (Result Http.Error Ranking)
          | ToGame
 
 
@@ -61,9 +62,9 @@ type alias Model = { screen : Screen
                    , jumpX : Float
                    , bigPlayer : Player
                    , jumpingPlayer : Player
+                   , gameEnd : Bool
                    , credentials : Credentials
                    , userinfo : UserInfo       
-                   , gameEnd : Bool
                    , overallHighscore : Highscore
                    , leaderBoard : Ranking
                    } 
@@ -110,7 +111,7 @@ updatePos (a,b) (c,d) = (a+c,d)
 --Check if a jumping big player collides with the small player
 isCollisionBigOnSmall : (Float,Float) -> (Float,Float) -> Bool 
 isCollisionBigOnSmall (a,b) (c,d) = 
-    if a+16 > c  && abs(b-d) <= 10.5 && c > -6 then True 
+    if a+16 > c  && abs(b-d) <= 9.5 && c > -6 then True 
     else False 
 
 --Check if a jumping small player collides with the big player
@@ -145,7 +146,7 @@ randomizeSize = Random.map (\b -> if b == 0 then Player1 else Player2) <| Random
 randDecideSize : Cmd Msg  
 randDecideSize = Random.generate DecideBigPlayer randomizeSize
 
---change theme
+--Change Themes
 changeThemeRight : ColorTheme -> ColorTheme 
 changeThemeRight colorTheme =
         case colorTheme of 
@@ -181,8 +182,7 @@ colorThemeToDeviceColor colorTheme =
             Theme3 -> (rgb 38 54 98, rgb 156 213 190)
             Theme4 ->  (rgb 230 25 75, rgb 223 220 234)
             Theme5 -> (rgb 73 105 72, rgb 229 232 151)
---(rgb 249 213 102, rgb 226 62 79)
---(rgb 39 62 72, rgb 178 187 57)
+
 colorThemeToString : ColorTheme -> String
 colorThemeToString colorTheme = 
         case colorTheme of 
@@ -192,19 +192,10 @@ colorThemeToString colorTheme =
                 Theme4 -> "4" 
                 Theme5 -> "5"
 
-colorThemeToInt : ColorTheme -> Int
-colorThemeToInt colorTheme = 
-        case colorTheme of 
-                Theme1 -> 1
-                Theme2 -> 2
-                Theme3 -> 3
-                Theme4 -> 4 
-                Theme5 -> 5
-
-
 --textOutline (to avoid repetition)
 textOutline : String -> Float -> Shape userMsg
 textOutline string n = GraphicSVG.text (string) |> bold |> sansserif |> size n |> filled black 
+
 
 
 --SERVER------------------------
@@ -246,8 +237,8 @@ userInfoEncoder : Model -> JEncode.Value
 userInfoEncoder model =
     JEncode.object
         [  ("highscore", JEncode.int model.userinfo.highscore)
-          , ("gamesPlayed", JEncode.int model.userinfo.gamesPlayed)
           , ("points", JEncode.int model.userinfo.points)
+          , ("gamesPlayed", JEncode.int model.userinfo.gamesPlayed)
           , ("playerTheme", JEncode.string (colorThemeToString model.userinfo.playerTheme))
           , ("deviceTheme", JEncode.string (colorThemeToString model.userinfo.deviceTheme))
         ]
@@ -281,11 +272,10 @@ decodeColorThemeType =
             _ -> JDecode.succeed Theme5
     )
 
-getUserInfo : Model -> Cmd Msg 
-getUserInfo model =  
-    Http.post 
+getUserInfo : Cmd Msg 
+getUserInfo =  
+    Http.get 
         { url = rootUrl ++ "getuserinfo/"
-        , body = Http.jsonBody <| userPassEncoder model
         , expect = Http.expectJson GetUserInfo userInfoDecoder
         }
 
@@ -304,14 +294,28 @@ overallHighscoreDecoder =
         (JDecode.field "username" JDecode.string)
         (JDecode.field "highscore" JDecode.int)
 
--- leaderBoardDecoder : JDecode.Decoder Ranking 
--- leaderBoardDecoder =
---     JDecode.map5 Ranking 
---         (JDecode.field "firstPlace" JDecode)
+
+--Get Leaderboard from server
+leaderBoardDecoder : JDecode.Decoder Ranking 
+leaderBoardDecoder =
+    JDecode.map5 Ranking 
+        (JDecode.field "firstPlace" overallHighscoreDecoder)
+        (JDecode.field "secondPlace" overallHighscoreDecoder)
+        (JDecode.field "thirdPlace" overallHighscoreDecoder)
+        (JDecode.field "fourthPlace" overallHighscoreDecoder)
+        (JDecode.field "fifthPlace" overallHighscoreDecoder)
+
+
+getLeaderBoard : Cmd Msg 
+getLeaderBoard = 
+    Http.get 
+        { url = rootUrl ++ "getleaderboard/"
+        , expect = Http.expectJson GetLeaderBoard leaderBoardDecoder
+        }
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-loginCmdMsg model = Cmd.batch [ getUserInfo model, getOverallHighscore]
-gameEndCmdMsg model = Cmd.batch [postUserInfo model, getUserInfo model, getOverallHighscore]
+loginCmdMsg model = Cmd.batch [ getUserInfo , getOverallHighscore]
+gameEndCmdMsg model = Cmd.batch [postUserInfo model, getUserInfo , getOverallHighscore]
 
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
@@ -471,19 +475,12 @@ update msg model = case Debug.log "msg" msg of
 
         LogoutPost -> (model, logoutPost)
         
-        GotoSignUpScreen -> 
-            let oldCredentials= model.credentials
-                newCredentials = { oldCredentials | username = "", password = ""}
-            in ({model | credentials = newCredentials, screen = SignUp, error = ""}, Cmd.none)
+        GotoSignUpScreen -> ({model | screen = SignUp, error = ""}, Cmd.none)
 
         --Screen: SignUp
         SignUpPost -> (model,signupPost model) 
 
-        GoBack ->             --THIS IS EXACLY SAME AS LOGOUTSCREEN 
-            let oldCredentials= model.credentials
-                newCredentials= { oldCredentials | username = "", password = ""}
-            in ({model | credentials = newCredentials, screen = Login, error = ""}, Cmd.none) 
-
+        GoBack -> ({model | screen = Login, error = ""}, Cmd.none) 
         
         --Update username and password on user input
         Username newUsername -> 
@@ -500,7 +497,7 @@ update msg model = case Debug.log "msg" msg of
 
         --Screen: Game 
         GotoLeaderBoardScreen ->
-            if member model.screen [Game Start, Game End] then ({model | screen = LeaderBoard}, Cmd.none)
+            if member model.screen [Game Start, Game End] then ({model | screen = LeaderBoard}, getLeaderBoard )
             else (model, Cmd.none)
 
         GoBackToGame ->
@@ -509,10 +506,11 @@ update msg model = case Debug.log "msg" msg of
 
 
         --SERVER 
+        --Userinfo
         PostUserInfo result ->
             case result of 
                 Ok "UpdatedUserInfo" ->
-                    ( model, Cmd.batch[getOverallHighscore,getUserInfo model])
+                    ( model, Cmd.batch[getOverallHighscore,getUserInfo ]) --why am i doing a get here???????? NOTE COME BACK LATER FIX
                 Ok "UserIsNotLoggedIn" ->
                     ( {model | error = "User Is Not Logged In"}, Cmd.none)
                 Ok _ -> 
@@ -527,10 +525,18 @@ update msg model = case Debug.log "msg" msg of
                 Err error ->
                     ( handleError model error, Cmd.none )
 
+        --Highscore/LeaderBoard
         GetOverallHighscore result-> 
             case result of 
                 Ok newModel -> 
                     ( { model | overallHighscore = newModel}, Cmd.none)
+                Err error ->    
+                    ( handleError model error, Cmd.none)
+
+        GetLeaderBoard result ->
+            case result of 
+                Ok newModel -> 
+                    ( { model | leaderBoard = newModel}, Cmd.none)
                 Err error ->    
                     ( handleError model error, Cmd.none)
 
@@ -598,21 +604,19 @@ view model =
         shapes =
             case model.screen of
                 Login -> 
-                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username][])
-                        |> move (0,35)
-                    , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] [])
-                        |> move (0,20)
+                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username][]) |> move (0,35)
+                    , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] []) |> move (0,20)
                     , loginTitle, userBox , passwordBox, loginButton, gotoSignUpButton, usertest, togame, errorMessage
                     ]
+
                 SignUp -> 
-                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username] [])
-                        |> move (0,35)
-                    ,   html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] [])
-                        |> move (0,20)
+                    [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username] []) |> move (0,35)
+                    , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] []) |> move (0,20)
                     , signUpTitle, userBox, passwordBox, signUpButton, goBackButton, usertest, errorMessage
                     ]
-                Game _ -> [ screen, basicTexts, startText, gameOver, overallHighscore, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
 
+                Game _ -> [ screen, basicTexts, instructions, gameOver, overallHighscore, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
+                
                 LeaderBoard -> [ screen, basicTexts, overallHighscore, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton, leaderBoard ] 
 
         --delete later
@@ -660,7 +664,7 @@ view model =
                           , GraphicSVG.text ("Points: " ++ (String.fromInt model.userinfo.points)) |> sansserif |> bold |> size 4 |> (if member model.screen [Game Start, LeaderBoard]  then filled blank else filled black) |> move (-7,47)
                           , textOutline ("User: " ++ model.credentials.username) 4 |> move (-46,-30)]
 
-        startText = group [GraphicSVG.text ("Instructions") |> sansserif |> bold |> underline |> size 5 |> (if model.screen == Game Start then filled black else filled blank) |> move (-13,40)
+        instructions = group [GraphicSVG.text ("Instructions") |> sansserif |> bold |> underline |> size 5 |> (if model.screen == Game Start then filled black else filled blank) |> move (-13,40)
                          , GraphicSVG.text "-Press Q to jump Player 1" |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,35)
                          , GraphicSVG.text ("-Press W to jump Player 2") |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,30)
                          , GraphicSVG.text ("-Big guy jumps over the small guy") |> sansserif |> bold |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-22,25)     
