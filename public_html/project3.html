@@ -8944,7 +8944,6 @@ var author$project$Main$init = F3(
 				secondPlace: {highscore: 0, username: '---------'},
 				thirdPlace: {highscore: 0, username: '---------'}
 			},
-			overallHighscore: {highscore: 0, username: ''},
 			player1_pos: _Utils_Tuple2(-30, -10),
 			player2_pos: _Utils_Tuple2(30, -10),
 			points: 0,
@@ -9014,7 +9013,7 @@ var author$project$Main$Highscore = F2(
 		return {highscore: highscore, username: username};
 	});
 var elm$json$Json$Decode$string = _Json_decodeString;
-var author$project$Main$overallHighscoreDecoder = A3(
+var author$project$Main$highscoreDecoder = A3(
 	elm$json$Json$Decode$map2,
 	author$project$Main$Highscore,
 	A2(elm$json$Json$Decode$field, 'username', elm$json$Json$Decode$string),
@@ -9023,11 +9022,11 @@ var elm$json$Json$Decode$map5 = _Json_map5;
 var author$project$Main$leaderBoardDecoder = A6(
 	elm$json$Json$Decode$map5,
 	author$project$Main$Ranking,
-	A2(elm$json$Json$Decode$field, 'firstPlace', author$project$Main$overallHighscoreDecoder),
-	A2(elm$json$Json$Decode$field, 'secondPlace', author$project$Main$overallHighscoreDecoder),
-	A2(elm$json$Json$Decode$field, 'thirdPlace', author$project$Main$overallHighscoreDecoder),
-	A2(elm$json$Json$Decode$field, 'fourthPlace', author$project$Main$overallHighscoreDecoder),
-	A2(elm$json$Json$Decode$field, 'fifthPlace', author$project$Main$overallHighscoreDecoder));
+	A2(elm$json$Json$Decode$field, 'firstPlace', author$project$Main$highscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'secondPlace', author$project$Main$highscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'thirdPlace', author$project$Main$highscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'fourthPlace', author$project$Main$highscoreDecoder),
+	A2(elm$json$Json$Decode$field, 'fifthPlace', author$project$Main$highscoreDecoder));
 var author$project$Main$rootUrl = 'https://mac1xa3.ca/e/leej229/';
 var elm$core$Result$mapError = F2(
 	function (f, result) {
@@ -9669,14 +9668,6 @@ var author$project$Main$getLeaderBoard = elm$http$Http$get(
 		expect: A2(elm$http$Http$expectJson, author$project$Main$GetLeaderBoard, author$project$Main$leaderBoardDecoder),
 		url: author$project$Main$rootUrl + 'getleaderboard/'
 	});
-var author$project$Main$GetOverallHighscore = function (a) {
-	return {$: 'GetOverallHighscore', a: a};
-};
-var author$project$Main$getOverallHighscore = elm$http$Http$get(
-	{
-		expect: A2(elm$http$Http$expectJson, author$project$Main$GetOverallHighscore, author$project$Main$overallHighscoreDecoder),
-		url: author$project$Main$rootUrl + 'getoverallhighscore/'
-	});
 var elm$core$Basics$pow = _Basics_pow;
 var author$project$Main$getProjectile = F3(
 	function (x, bigPlayer, jumpingPlayer) {
@@ -10102,7 +10093,7 @@ var author$project$Main$update = F2(
 									elm$core$Platform$Cmd$batch(
 										_List_fromArray(
 											[
-												author$project$Main$getOverallHighscore,
+												author$project$Main$getLeaderBoard,
 												author$project$Main$postUserInfo(newModel)
 											])));
 							} else {
@@ -10295,21 +10286,6 @@ var author$project$Main$update = F2(
 						A2(author$project$Main$handleError, model, error),
 						elm$core$Platform$Cmd$none);
 				}
-			case 'GetOverallHighscore':
-				var result = _n0.a;
-				if (result.$ === 'Ok') {
-					var newModel = result.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{overallHighscore: newModel}),
-						author$project$Main$getUserInfo);
-				} else {
-					var error = result.a;
-					return _Utils_Tuple2(
-						A2(author$project$Main$handleError, model, error),
-						elm$core$Platform$Cmd$none);
-				}
 			case 'GetLeaderBoard':
 				var result = _n0.a;
 				if (result.$ === 'Ok') {
@@ -10318,7 +10294,7 @@ var author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{leaderBoard: newModel}),
-						elm$core$Platform$Cmd$none);
+						author$project$Main$getUserInfo);
 				} else {
 					var error = result.a;
 					return _Utils_Tuple2(
@@ -10345,7 +10321,7 @@ var author$project$Main$update = F2(
 										player2_pos: _Utils_Tuple2(30, -10),
 										screen: author$project$Main$Game(author$project$Main$Start)
 									}),
-								author$project$Main$getOverallHighscore);
+								author$project$Main$getLeaderBoard);
 						default:
 							return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 					}
@@ -11418,12 +11394,12 @@ var author$project$Main$view = function (model) {
 					_Utils_Tuple2(-45, -40),
 					A2(
 						author$project$Main$textOutline,
-						'Overall Highscore: ' + elm$core$String$fromInt(model.overallHighscore.highscore),
+						'Overall Highscore: ' + elm$core$String$fromInt(model.leaderBoard.firstPlace.highscore),
 						4)),
 					A2(
 					MacCASOutreach$graphicsvg$GraphicSVG$move,
 					_Utils_Tuple2(-45, -45),
-					A2(author$project$Main$textOutline, 'By User: ' + model.overallHighscore.username, 3)),
+					A2(author$project$Main$textOutline, 'By User: ' + model.leaderBoard.firstPlace.username, 3)),
 					A2(
 					MacCASOutreach$graphicsvg$GraphicSVG$move,
 					_Utils_Tuple2(-45, -52),

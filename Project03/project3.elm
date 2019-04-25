@@ -37,7 +37,6 @@ type Msg = Tick Float GetKeyState
          | Password String
          | PostUserInfo (Result Http.Error String) 
          | GetUserInfo (Result Http.Error UserInfo)
-         | GetOverallHighscore (Result Http.Error Highscore)
          | GetLeaderBoard (Result Http.Error Ranking)
          | ToGame
 
@@ -65,7 +64,6 @@ type alias Model = { screen : Screen
                    , gameEnd : Bool
                    , credentials : Credentials
                    , userinfo : UserInfo       
-                   , overallHighscore : Highscore
                    , leaderBoard : Ranking
                    , points : Int
                    } 
@@ -280,15 +278,8 @@ getUserInfo =
         }
 
 --Get overall highscore from server
-getOverallHighscore : Cmd Msg 
-getOverallHighscore =  
-    Http.get 
-        { url = rootUrl ++ "getoverallhighscore/"
-        , expect = Http.expectJson GetOverallHighscore overallHighscoreDecoder
-        }
-
-overallHighscoreDecoder : JDecode.Decoder Highscore 
-overallHighscoreDecoder = 
+highscoreDecoder : JDecode.Decoder Highscore 
+highscoreDecoder = 
     JDecode.map2 Highscore 
         (JDecode.field "username" JDecode.string)
         (JDecode.field "highscore" JDecode.int)
@@ -298,11 +289,11 @@ overallHighscoreDecoder =
 leaderBoardDecoder : JDecode.Decoder Ranking 
 leaderBoardDecoder =
     JDecode.map5 Ranking 
-        (JDecode.field "firstPlace" overallHighscoreDecoder)
-        (JDecode.field "secondPlace" overallHighscoreDecoder)
-        (JDecode.field "thirdPlace" overallHighscoreDecoder)
-        (JDecode.field "fourthPlace" overallHighscoreDecoder)
-        (JDecode.field "fifthPlace" overallHighscoreDecoder)
+        (JDecode.field "firstPlace" highscoreDecoder)
+        (JDecode.field "secondPlace" highscoreDecoder)
+        (JDecode.field "thirdPlace" highscoreDecoder)
+        (JDecode.field "fourthPlace" highscoreDecoder)
+        (JDecode.field "fifthPlace" highscoreDecoder)
 
 
 getLeaderBoard : Cmd Msg 
@@ -328,7 +319,6 @@ init flags url key =
                 , points = 0
                 , credentials = {username = "", password = ""}
                 , userinfo= {highscore = 0, avgPoints = 0.0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
-                , overallHighscore = {username = "", highscore = 0}
                 , leaderBoard = { firstPlace = {username = "---------", highscore = 0}
                                 , secondPlace ={username = "---------", highscore = 0}
                                 , thirdPlace = {username = "---------", highscore = 0}
@@ -409,7 +399,7 @@ update msg model = case Debug.log "msg" msg of
                     in if model.gameEnd == True then
                             (model,Cmd.none)
                         else
-                            (newModel, Cmd.batch[getOverallHighscore, postUserInfo newModel]) --sendHighscore model 
+                            (newModel, Cmd.batch[getLeaderBoard, postUserInfo newModel]) --sendHighscore model 
                 
                 --CASE 3) for 100 ticks, move players, after 100 ticks, reset to original position
                 else if model.count < 100 then
@@ -522,18 +512,11 @@ update msg model = case Debug.log "msg" msg of
                 Err error ->
                     ( handleError model error, Cmd.none )
 
-        --Highscore/LeaderBoard
-        GetOverallHighscore result-> 
-            case result of 
-                Ok newModel -> 
-                    ( { model | overallHighscore = newModel}, getUserInfo)
-                Err error ->    
-                    ( handleError model error, Cmd.none)
-
+        --LeaderBoard
         GetLeaderBoard result ->
             case result of 
                 Ok newModel -> 
-                    ( { model | leaderBoard = newModel}, Cmd.none)
+                    ( { model | leaderBoard = newModel}, getUserInfo)
                 Err error ->    
                     ( handleError model error, Cmd.none)
 
@@ -543,7 +526,7 @@ update msg model = case Debug.log "msg" msg of
                 Ok "LoginFailed" ->
                    ( { model | error = "Incorrect Username/Password"}, Cmd.none)
                 Ok "LoggedIn" ->
-                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, getOverallHighscore)
+                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, getLeaderBoard)
                 Ok _ -> 
                     (model, Cmd.none)
                 Err error ->
@@ -691,8 +674,8 @@ view model =
                                         |> notifyTap GotoLeaderBoardScreen
 
         overallHighscore = group [roundedRect 47 33 2 |> filled lightGrey |> addOutline (solid 0.7) black |> move (-24,-50)
-                                , textOutline ("Overall Highscore: " ++ String.fromInt model.overallHighscore.highscore) 4 |> move (-45,-40)
-                                , textOutline ("By User: " ++ model.overallHighscore.username) 3 |> move (-45,-45)
+                                , textOutline ("Overall Highscore: " ++ String.fromInt model.leaderBoard.firstPlace.highscore) 4 |> move (-45,-40)
+                                , textOutline ("By User: " ++ model.leaderBoard.firstPlace.username) 3 |> move (-45,-45)
                                 , textOutline ("Your highscore is: " ++ String.fromInt model.userinfo.highscore ) 3 |> move (-45,-52)
                                 , textOutline ("# Games Played: " ++ String.fromInt model.userinfo.gamesPlayed) 3 |> move (-45, -57)
                                 , textOutline ("Avg Points: " ++ String.fromFloat model.userinfo.avgPoints ) 3 |> move (-45, -62) ]
