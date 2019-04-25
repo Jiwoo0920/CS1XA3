@@ -19,7 +19,7 @@ class UserInfo(models.Model):
 	gamesPlayed = models.IntegerField(default=0)
 	points = models.IntegerField(default=0)
 	totalPoints = models.IntegerField(default=0)
-	averagePoints = models.FloatField(default=0.0)
+	avgPoints = models.FloatField(default=0.0)
 	objects = UserInfoManager()
 
 

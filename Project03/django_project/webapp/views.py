@@ -58,10 +58,11 @@ def postUserInfo(request):
 			userinfo.highscore = highscore
 			userinfo.updatedTime = timezone.now()
 		userinfo.gamesPlayed = gamesPlayed
-		userinfo.points = points
 		userinfo.totalPoints += points
 		userinfo.playerTheme = playerTheme
 		userinfo.deviceTheme = deviceTheme
+		if userinfo.gamesPlayed > 0:
+			userinfo.avgPoints = round((userinfo.totalPoints/userinfo.gamesPlayed),5)
 		userinfo.save()
 		return HttpResponse("UpdatedUserInfo")
 	else:
@@ -75,11 +76,7 @@ def getUserInfo(request):
 		userhighscore = userinfo.highscore
 		respDict = {}
 		respDict['highscore'] = userinfo.highscore
-		respDict['points'] = userinfo.points
-		if userinfo.gamesPlayed > 0:
-			respDict['avgPoints'] = round((userinfo.totalPoints/userinfo.gamesPlayed),5)
-		else:
-			respDict['avgPoints'] = 0
+		respDict['avgPoints'] = userinfo.avgPoints
 		respDict['gamesPlayed'] = userinfo.gamesPlayed
 		respDict['playerTheme'] = userinfo.playerTheme
 		respDict['deviceTheme'] = userinfo.deviceTheme

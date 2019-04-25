@@ -67,6 +67,7 @@ type alias Model = { screen : Screen
                    , userinfo : UserInfo       
                    , overallHighscore : Highscore
                    , leaderBoard : Ranking
+                   , points : Int
                    } 
 
 --Need for server
@@ -86,7 +87,6 @@ type alias Ranking = { firstPlace : Highscore
                      }
 
 type alias UserInfo = { highscore : Int
-                      , points : Int
                       , avgPoints : Float
                       , gamesPlayed : Int
                       , playerTheme : ColorTheme 
@@ -237,11 +237,12 @@ userInfoEncoder : Model -> JEncode.Value
 userInfoEncoder model =
     JEncode.object
         [  ("highscore", JEncode.int model.userinfo.highscore)
-          , ("points", JEncode.int model.userinfo.points)
+          , ("points", JEncode.int model.points)
           , ("gamesPlayed", JEncode.int model.userinfo.gamesPlayed)
           , ("playerTheme", JEncode.string (colorThemeToString model.userinfo.playerTheme))
           , ("deviceTheme", JEncode.string (colorThemeToString model.userinfo.deviceTheme))
         ]
+
 postUserInfo : Model -> Cmd Msg
 postUserInfo model = 
     Http.post
@@ -252,9 +253,8 @@ postUserInfo model =
 
 userInfoDecoder : JDecode.Decoder UserInfo  
 userInfoDecoder = 
-    JDecode.map6 UserInfo
+    JDecode.map5 UserInfo
         (JDecode.field "highscore" JDecode.int)
-        (JDecode.field "points" JDecode.int)
         (JDecode.field "avgPoints" JDecode.float)
         (JDecode.field "gamesPlayed" JDecode.int)
         (JDecode.field "playerTheme" decodeColorThemeType)
@@ -278,7 +278,6 @@ getUserInfo =
         { url = rootUrl ++ "getuserinfo/"
         , expect = Http.expectJson GetUserInfo userInfoDecoder
         }
-
 
 --Get overall highscore from server
 getOverallHighscore : Cmd Msg 
@@ -314,9 +313,6 @@ getLeaderBoard =
         }
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-loginCmdMsg model = Cmd.batch [ getUserInfo , getOverallHighscore]
-gameEndCmdMsg model = Cmd.batch [postUserInfo model, getUserInfo , getOverallHighscore]
-
 --<<Init>>
 init : () -> Url.Url -> Key -> ( Model, Cmd Msg )
 init flags url key = 
@@ -329,8 +325,9 @@ init flags url key =
                 , bigPlayer = Player2
                 , jumpingPlayer = None
                 , gameEnd = False
+                , points = 0
                 , credentials = {username = "", password = ""}
-                , userinfo= {highscore = 0, points = 0, avgPoints = 0.0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
+                , userinfo= {highscore = 0, avgPoints = 0.0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
                 , overallHighscore = {username = "", highscore = 0}
                 , leaderBoard = { firstPlace = {username = "---------", highscore = 0}
                                 , secondPlace ={username = "---------", highscore = 0}
@@ -345,13 +342,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model = case Debug.log "msg" msg of
         Tick time (keyToState,(arrowX,arrowY),(wasdX,wasdY)) -> 
             let player1_jumpState = 
-                    case keyToState (Key "q") of 
+                    case keyToState LeftArrow of 
                         JustDown ->  Jump 
                         Down -> Jump
                         _ ->  NotJump
 
                 player2_jumpState =
-                    case keyToState (Key "w") of 
+                    case keyToState RightArrow of 
                         JustDown -> Jump
                         Down -> Jump
                         _ -> NotJump
@@ -378,21 +375,20 @@ update msg model = case Debug.log "msg" msg of
                                                 , player2_pos = updatePos (model.player2_pos) (-2.5, getProjectile model.jumpX model.bigPlayer model.jumpingPlayer )
                                                 , count = model.count + 1 }
 
-                resetModel = let oldUserInfo = model.userinfo 
-                                 newUserInfo = { oldUserInfo | points = model.userinfo.points + 1}
-                             in {model | player1_pos = (-114,-10)
+                resetModel = {model | player1_pos = (-114,-10)
                                     , count = 0
                                     , jumpingPlayer = None 
                                     , jumpX = 0
                                     , player2_pos = (114,-10)
-                                    , userinfo = newUserInfo}
+                                    , points = model.points + 1
+                            }
 
             in --CASE 1) if game over and player presses spacebar to restart
                 if model.screen == Login || model.screen == SignUp || model.screen == LeaderBoard then (model,Cmd.none)
                 else if model.screen == Game Start  && restart == False then (model,Cmd.none)
                 else if restart && (model.screen == Game End || model.screen == Game Start) then 
                     let oldUserInfo = model.userinfo 
-                        newUserInfo = { oldUserInfo | gamesPlayed = model.userinfo.gamesPlayed + 1, points = 0}
+                        newUserInfo = { oldUserInfo | gamesPlayed = model.userinfo.gamesPlayed + 1 }
                         newModel = { model | player1_pos = (-114,-10)
                                     , player2_pos = (114,-10) 
                                     , count = 0
@@ -401,18 +397,19 @@ update msg model = case Debug.log "msg" msg of
                                     , jumpingPlayer = None
                                     , screen = Game InProgress
                                     , gameEnd = False
+                                    , points = 0
                                     , userinfo = newUserInfo }
                     in (newModel, randDecideSize)
                 --CASE 2)if there's a collision, end game 
                 else if isCollision model then 
-                    let newHighscore = if model.userinfo.points > model.userinfo.highscore then model.userinfo.points else model.userinfo.highscore 
+                    let newHighscore = if model.points > model.userinfo.highscore then model.points else model.userinfo.highscore 
                         oldUserInfo = model.userinfo
                         newUserInfo= { oldUserInfo | highscore = newHighscore}
                         newModel = {model | player1_pos = model.player1_pos, player2_pos = model.player2_pos, screen = Game End, userinfo = newUserInfo, gameEnd=True }
                     in if model.gameEnd == True then
                             (model,Cmd.none)
                         else
-                            (newModel, postUserInfo newModel) --sendHighscore model 
+                            (newModel, Cmd.batch[getOverallHighscore, postUserInfo newModel]) --sendHighscore model 
                 
                 --CASE 3) for 100 ticks, move players, after 100 ticks, reset to original position
                 else if model.count < 100 then
@@ -471,7 +468,7 @@ update msg model = case Debug.log "msg" msg of
                         in (newModel, postUserInfo newModel)
 
         --Screen:  LOGIN
-        LoginPost -> (model, loginPost model) --log in button
+        LoginPost -> (model, loginPost model) 
 
         LogoutPost -> (model, logoutPost)
         
@@ -505,12 +502,12 @@ update msg model = case Debug.log "msg" msg of
             else (model, Cmd.none)
 
 
-        --SERVER 
+        --SERVER RESPONSE
         --Userinfo
         PostUserInfo result ->
             case result of 
                 Ok "UpdatedUserInfo" ->
-                    ( model, Cmd.batch[getOverallHighscore,getUserInfo ]) --why am i doing a get here???????? NOTE COME BACK LATER FIX
+                    ( model, Cmd.none) --why am i doing a get here???????? NOTE COME BACK LATER FIX
                 Ok "UserIsNotLoggedIn" ->
                     ( {model | error = "User Is Not Logged In"}, Cmd.none)
                 Ok _ -> 
@@ -529,7 +526,7 @@ update msg model = case Debug.log "msg" msg of
         GetOverallHighscore result-> 
             case result of 
                 Ok newModel -> 
-                    ( { model | overallHighscore = newModel}, Cmd.none)
+                    ( { model | overallHighscore = newModel}, getUserInfo)
                 Err error ->    
                     ( handleError model error, Cmd.none)
 
@@ -546,7 +543,7 @@ update msg model = case Debug.log "msg" msg of
                 Ok "LoginFailed" ->
                    ( { model | error = "Incorrect Username/Password"}, Cmd.none)
                 Ok "LoggedIn" ->
-                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, loginCmdMsg model)
+                    ( { model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, getOverallHighscore)
                 Ok _ -> 
                     (model, Cmd.none)
                 Err error ->
@@ -571,7 +568,7 @@ update msg model = case Debug.log "msg" msg of
                         oldCredentials= model.credentials
                         newCredentials= { oldCredentials | username = "", password = ""}
                         oldUserInfo = model.userinfo 
-                        newUserInfo = { oldUserInfo | highscore = 0, points = 0, avgPoints = 0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
+                        newUserInfo = { oldUserInfo | highscore = 0, avgPoints = 0, gamesPlayed = 0, playerTheme = Theme1, deviceTheme = Theme1}
                     in
                         ({model | credentials = newCredentials, userinfo = newUserInfo, screen = Login, error = ""}, Cmd.none) --TODO: update logout post!!
                 Ok _ -> ( {model | error = "something happened"}, Cmd.none)
@@ -661,7 +658,7 @@ view model =
 
         --Screen: GAME
         basicTexts = group [textOutline "Clash!" 10 |> move (-13,54)
-                          , GraphicSVG.text ("Points: " ++ (String.fromInt model.userinfo.points)) |> sansserif |> bold |> size 4 |> (if member model.screen [Game Start, LeaderBoard]  then filled blank else filled black) |> move (-7,47)
+                          , GraphicSVG.text ("Points: " ++ (String.fromInt model.points)) |> sansserif |> bold |> size 4 |> (if member model.screen [Game Start, LeaderBoard]  then filled blank else filled black) |> move (-7,47)
                           , textOutline ("User: " ++ model.credentials.username) 4 |> move (-46,-30)]
 
         instructions = group [GraphicSVG.text ("Instructions") |> sansserif |> bold |> underline |> size 5 |> (if model.screen == Game Start then filled black else filled blank) |> move (-13,40)
@@ -742,7 +739,8 @@ view model =
                             , textOutline ("5) " ++ model.leaderBoard.fifthPlace.username) 6 |> move (-30,-7), textOutline (String.fromInt model.leaderBoard.fifthPlace.highscore) 6 |> move (20,-7)
                              ]
 
-        goBackToGameButton = group [roundedRect 9 9 2 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))|> addOutline (solid 0.7) black , textOutline "B" 8 |> move (-3,-3)]
+        goBackToGameButton = group [roundedRect 9 9 2 |> (filled (second (colorThemeToDeviceColor model.userinfo.deviceTheme)))|> addOutline (solid 0.7) black
+                                  , textOutline "B" 8 |> move (-3,-3)]
                                     |> move (13,-56)
                                     |> notifyTap GoBackToGame
 
