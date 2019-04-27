@@ -77,6 +77,7 @@ When the user successfully login or sign up and is redirected to the game screen
 * Users can log out of the game by clicking on the **"logout"** button located on the bottom-right side of the game device
 * When logout is requested, the **server** correctly ends the user's session and logs out the user
 * Once the user is logged out, he/she is brought back to the login screen
+* Users cannot logout in the middle of the game
 
 ## **2) Points**
 * A **Points** text is shown on the upper-centre of the game screen (underneath the **Crash!** title) to record/show the number of points the user earned in a game
