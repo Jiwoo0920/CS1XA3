@@ -2,7 +2,7 @@
 **Name:** Jiwoo Lee  
 **MacID:** leej229
 
-**Last Update:** April 26, 2019  
+**Last Update:** April 27, 2019  
 **Status:** Finished Project03
 
 # Descriptions: 
@@ -42,16 +42,17 @@ Personally I found this the most comfortable/effective position of your fingers,
     source python_env/bin/activate
     ```
 * cd into **~/CS1XA3/Project03**
-* install the required python packages in **requirements.txt** located in **~/CS1XA3/Project03** by typing the following command:
-    ```
-    pip install -r requirements.txt
-    ```
 * cd into **~/CS1XA3/Project03/django_project**
 * start the server with the follwing command:
     ```
     python manage.py runserver localhost:10034
     ```
 * go to **https://mac1xa3.ca/u/leej229/project3.html** to see the project
+
+If you are running this on your local machine by cloning the repo, install the required python packages in **requirements.txt** located in **~/CS1XA3/Project03** by typing the following command:  
+    ```
+    pip install -r requirements.txt
+    ```
 
 
 # Features
