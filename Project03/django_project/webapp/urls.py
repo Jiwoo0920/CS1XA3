@@ -7,6 +7,5 @@ urlpatterns = [
     path('logoutuser/',views.logout_user, name='webapp-logout_user'),
     path('postuserinfo/', views.postUserInfo, name='webapp-postUserInfo'),
     path('getuserinfo/', views.getUserInfo, name='webapp-getUserInfo'),
-    path('getoverallhighscore/', views.getOverallHighscore, name='webapp-getOverallHighscore'),
     path('getleaderboard/', views.getLeaderBoard, name='webapp-getLeaderBoard'),
 ]

@@ -38,7 +38,6 @@ type Msg = Tick Float GetKeyState
          | PostUserInfo (Result Http.Error String) 
          | GetUserInfo (Result Http.Error UserInfo)
          | GetLeaderBoard (Result Http.Error Ranking)
-         | ToGame
 
 
 type Player = Player1 | Player2 | None
@@ -325,20 +324,20 @@ init flags url key =
                                 , fourthPlace = {username = "---------", highscore = 0}
                                 , fifthPlace = {username = "---------", highscore = 0}}
                 }   
-    in ( model , randDecideSize) -- add init model
+    in ( model , randDecideSize) 
 
 --<<Update>>
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model = case Debug.log "msg" msg of
         Tick time (keyToState,(arrowX,arrowY),(wasdX,wasdY)) -> 
             let player1_jumpState = 
-                    case keyToState LeftArrow of 
+                    case keyToState (Key "o") of 
                         JustDown ->  Jump 
                         Down -> Jump
                         _ ->  NotJump
 
                 player2_jumpState =
-                    case keyToState RightArrow of 
+                    case keyToState (Key "p") of 
                         JustDown -> Jump
                         Down -> Jump
                         _ -> NotJump
@@ -558,8 +557,6 @@ update msg model = case Debug.log "msg" msg of
                 Err error ->
                     ( handleError model error, Cmd.none)
 
-        ToGame -> ({model | screen = Game Start}, Cmd.none)
-
 --error 
 handleError : Model -> Http.Error -> Model
 handleError model error =
@@ -579,30 +576,25 @@ handleError model error =
 --<<View>>
 view : Model -> { title : String, body : Collage Msg }
 view model = 
-    let title = "Clash!"
+    let title = "Crash!"
         body = collage 101 150 shapes
         shapes =
             case model.screen of
                 Login -> 
                     [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username][]) |> move (0,35)
                     , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] []) |> move (0,20)
-                    , loginTitle, userBox , passwordBox, loginButton, gotoSignUpButton, usertest, togame, errorMessage
+                    , loginTitle, userBox , passwordBox, loginButton, gotoSignUpButton, errorMessage
                     ]
 
                 SignUp -> 
                     [ html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Username", Events.onInput Username] []) |> move (0,35)
                     , html 50 20 (Html.input [Html.Attributes.style "width" "25px", Html.Attributes.style "height" "5px", Html.Attributes.style "font-size" "3pt", Html.Attributes.placeholder "Password", Html.Attributes.type_ "password", Events.onInput Password] []) |> move (0,20)
-                    , signUpTitle, userBox, passwordBox, signUpButton, goBackButton, usertest, errorMessage
+                    , signUpTitle, userBox, passwordBox, signUpButton, goBackButton, errorMessage
                     ]
 
                 Game _ -> [ screen, basicTexts, instructions, gameOver, overallHighscore, player1, player2, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton ] 
                 
                 LeaderBoard -> [ screen, basicTexts, overallHighscore, logoutButton, themeButtons, showLeaderBoardButton, goBackToGameButton, leaderBoard ] 
-
-        --delete later
-        togame = square 5 |> filled green |> notifyTap ToGame 
-
-        usertest = textOutline (model.credentials.username ++ "/" ++ model.credentials.password) 4 |> move (0,-40)
 
         --Error Msg
         errorMessage = GraphicSVG.text model.error |> size 5 |> sansserif |> bold |> filled red |> move (-39,-25) 
@@ -640,7 +632,7 @@ view model =
             |> notifyTap GoBack
 
         --Screen: GAME
-        basicTexts = group [textOutline "Clash!" 10 |> move (-13,54)
+        basicTexts = group [textOutline "Crash!" 10 |> move (-13,54)
                           , GraphicSVG.text ("Points: " ++ (String.fromInt model.points)) |> sansserif |> bold |> size 4 |> (if member model.screen [Game Start, LeaderBoard]  then filled blank else filled black) |> move (-7,47)
                           , textOutline ("User: " ++ model.credentials.username) 4 |> move (-46,-30)]
 

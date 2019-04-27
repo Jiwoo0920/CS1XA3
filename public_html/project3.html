@@ -9988,7 +9988,8 @@ var author$project$Main$update = F2(
 								A3(author$project$Main$getProjectile, model.jumpX, model.bigPlayer, model.jumpingPlayer)))
 					});
 				var player2_jumpState = function () {
-					var _n5 = keyToState(MacCASOutreach$graphicsvg$GraphicSVG$App$RightArrow);
+					var _n5 = keyToState(
+						MacCASOutreach$graphicsvg$GraphicSVG$App$Key('p'));
 					switch (_n5.$) {
 						case 'JustDown':
 							return author$project$Main$Jump;
@@ -10016,7 +10017,8 @@ var author$project$Main$update = F2(
 							_Utils_Tuple2(-2.5, -10))
 					});
 				var player1_jumpState = function () {
-					var _n4 = keyToState(MacCASOutreach$graphicsvg$GraphicSVG$App$LeftArrow);
+					var _n4 = keyToState(
+						MacCASOutreach$graphicsvg$GraphicSVG$App$Key('o'));
 					switch (_n4.$) {
 						case 'JustDown':
 							return author$project$Main$Jump;
@@ -10365,7 +10367,7 @@ var author$project$Main$update = F2(
 						A2(author$project$Main$handleError, model, error),
 						elm$core$Platform$Cmd$none);
 				}
-			case 'GotLogoutResponse':
+			default:
 				var result = _n0.a;
 				if (result.$ === 'Ok') {
 					if (result.a === 'LoggedOut') {
@@ -10395,14 +10397,6 @@ var author$project$Main$update = F2(
 						A2(author$project$Main$handleError, model, error),
 						elm$core$Platform$Cmd$none);
 				}
-			default:
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							screen: author$project$Main$Game(author$project$Main$Start)
-						}),
-					elm$core$Platform$Cmd$none);
 		}
 	});
 var MacCASOutreach$graphicsvg$GraphicSVG$NoLine = {$: 'NoLine'};
@@ -10746,7 +10740,6 @@ var MacCASOutreach$graphicsvg$GraphicSVG$collage = F3(
 	function (w, h, shapes) {
 		return A3(MacCASOutreach$graphicsvg$GraphicSVG$Collage, w, h, shapes);
 	});
-var MacCASOutreach$graphicsvg$GraphicSVG$green = A4(MacCASOutreach$graphicsvg$GraphicSVG$RGBA, 115, 210, 22, 1);
 var MacCASOutreach$graphicsvg$GraphicSVG$grey = A4(MacCASOutreach$graphicsvg$GraphicSVG$RGBA, 211, 215, 207, 1);
 var MacCASOutreach$graphicsvg$GraphicSVG$html = F3(
 	function (w, h, htm) {
@@ -10922,7 +10915,6 @@ var author$project$Main$Password = function (a) {
 var author$project$Main$SignUpPost = {$: 'SignUpPost'};
 var author$project$Main$ThemeLeft = {$: 'ThemeLeft'};
 var author$project$Main$ThemeRight = {$: 'ThemeRight'};
-var author$project$Main$ToGame = {$: 'ToGame'};
 var author$project$Main$Username = function (a) {
 	return {$: 'Username', a: a};
 };
@@ -11024,10 +11016,6 @@ var elm$html$Html$Events$onInput = function (tagger) {
 			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
 };
 var author$project$Main$view = function (model) {
-	var usertest = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$move,
-		_Utils_Tuple2(0, -40),
-		A2(author$project$Main$textOutline, model.credentials.username + ('/' + model.credentials.password), 4));
 	var userBox = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(-20, 22.7),
@@ -11047,14 +11035,7 @@ var author$project$Main$view = function (model) {
 					_Utils_Tuple2(-12, -2),
 					A2(author$project$Main$textOutline, 'Username', 5))
 				])));
-	var togame = A2(
-		MacCASOutreach$graphicsvg$GraphicSVG$notifyTap,
-		author$project$Main$ToGame,
-		A2(
-			MacCASOutreach$graphicsvg$GraphicSVG$filled,
-			MacCASOutreach$graphicsvg$GraphicSVG$green,
-			MacCASOutreach$graphicsvg$GraphicSVG$square(5)));
-	var title = 'Clash!';
+	var title = 'Crash!';
 	var themeButtons = A2(
 		MacCASOutreach$graphicsvg$GraphicSVG$move,
 		_Utils_Tuple2(6, 0),
@@ -11713,7 +11694,7 @@ var author$project$Main$view = function (model) {
 				A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$move,
 				_Utils_Tuple2(-13, 54),
-				A2(author$project$Main$textOutline, 'Clash!', 10)),
+				A2(author$project$Main$textOutline, 'Crash!', 10)),
 				A2(
 				MacCASOutreach$graphicsvg$GraphicSVG$move,
 				_Utils_Tuple2(-7, 47),
@@ -11785,8 +11766,6 @@ var author$project$Main$view = function (model) {
 						passwordBox,
 						loginButton,
 						gotoSignUpButton,
-						usertest,
-						togame,
 						errorMessage
 					]);
 			case 'SignUp':
@@ -11834,7 +11813,6 @@ var author$project$Main$view = function (model) {
 						passwordBox,
 						signUpButton,
 						goBackButton,
-						usertest,
 						errorMessage
 					]);
 			case 'Game':
