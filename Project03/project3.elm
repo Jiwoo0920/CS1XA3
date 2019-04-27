@@ -637,8 +637,8 @@ view model =
                           , textOutline ("User: " ++ model.credentials.username) 4 |> move (-46,-30)]
 
         instructions = group [GraphicSVG.text ("Instructions") |> sansserif |> bold |> underline |> size 5 |> (if model.screen == Game Start then filled black else filled blank) |> move (-13,40)
-                         , GraphicSVG.text "-Press Q to jump Player 1" |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,35)
-                         , GraphicSVG.text ("-Press W to jump Player 2") |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,30)
+                         , GraphicSVG.text "-Press O to jump Player 1" |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,35)
+                         , GraphicSVG.text ("-Press P to jump Player 2") |> sansserif |> bold  |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-17,30)
                          , GraphicSVG.text ("-Big guy jumps over the small guy") |> sansserif |> bold |> size 3 |> (if model.screen == Game Start then filled black else filled blank) |> move (-22,25)     
                          , GraphicSVG.text ("Press Spacebar to Start!") |> sansserif |> bold |> size 5 |> (if model.screen == Game  Start then filled red else filled blank) |> move (-29,15)]
                          |> move (0,4)
