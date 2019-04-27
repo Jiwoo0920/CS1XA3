@@ -21,6 +21,8 @@ The two characters cannot jump simultaneously.
 
 When the two characters collide into each other, the game ends and updates user highscore. To play again, simply press the **"spacebar"**  
 
+### A Short Demonstration of the Game:
+![](crash_demonstration.gif)
   
 ## **Tips**
 This game was designed so that you place your **right hand**'s fingers on the following positions:
@@ -52,8 +54,6 @@ Personally I found this the most comfortable/effective position of your fingers,
     ```
 * goto **https://mac1xa3.ca/u/leej229/project3.html** to see the project
 
-### A Short Demonstration of the Game:
-![](crash_demonstration.gif)
 
 # Features
 ## **1) User Authentication:**
@@ -71,6 +71,8 @@ Personally I found this the most comfortable/effective position of your fingers,
 * You cannot sign up if the username already exists
 * If either one of the above happens, an error message will show up on the bottom of the screen to notify the user
 * If sign up succeeds, the user is authenticated, and the game screen will show up
+
+When the user successfully login or sign up and is redirected to the game screen, a short instruction of the game is given on the screen and the user is to press on the **spacebar** to start the game.
 
 ## **2) Points**
 * A **Points** text is shown on the upper-centre of the game screen (underneath the **Crash!** title) to record/show the number of points the user earned in a game
