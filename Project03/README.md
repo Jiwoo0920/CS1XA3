@@ -51,7 +51,7 @@ Personally I found this the most comfortable/effective position of your fingers,
     ```
     python manage.py runserver localhost:10034
     ```
-* goto **https://mac1xa3.ca/u/leej229/project3.html** to see the project
+* go to **https://mac1xa3.ca/u/leej229/project3.html** to see the project
 
 
 # Features
