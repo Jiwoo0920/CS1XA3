@@ -42,7 +42,7 @@ Personally I found this the most comfortable/effective position of your fingers,
     source python_env/bin/activate
     ```
 * cd into **~/CS1XA3/Project03**
-* install the required python packages in **requirements.txt** located in ~/CS1XA3/Project03 by typing the folling command:
+* install the required python packages in **requirements.txt** located in **~/CS1XA3/Project03** by typing the following command:
     ```
     pip install -r requirements.txt
     ```
@@ -58,14 +58,14 @@ Personally I found this the most comfortable/effective position of your fingers,
 ## **1) User Authentication:**
 ### **1) Login:**
 * When you go to **https://mac1xa3.ca/u/leej229/project3.html** page, the first thing you'll see is a Login page with two fields: **Username** and **Password**
-* If you already have an account, fill out the Username and Password fields and click on the **Login** Butto
+* If you already have an account, fill out the Username and Password fields and click on the **Login** Button
 * If the user is authenticated, the game screen will show up and you can begin to play!
 * If the user is not authenticated, an error message will show up on the bottom of the screen to notify the user
 
 ### **2) Sign Up:**
-* If you don't have an account already, click on the **Sign Up** button, and a Sign Up screen will show up 
+* If you don't have an account already, click on the **Sign Up** button, and a sign up screen will show up 
 * The sign up screen also has two fields: **Username** and **Password**
-* Fill out the fields and click on **Sin Up** button to sign up
+* Fill out the fields and click on **Sign Up** button to sign up
 * You should not leave either of Username or Password empty
 * You cannot sign up if the username already exists
 * If either one of the above happens, an error message will show up on the bottom of the screen to notify the user
@@ -83,14 +83,14 @@ When the user successfully login or sign up and is redirected to the game screen
 * A **Points** text is shown on the upper-centre of the game screen (underneath the **Crash!** title) to record/show the number of points the user earned in a game
 * User earns a point each time he/she successfully jumps the big character over the small character and the characters reach the end of the screen (takes approximately 2 seconds to do so)
 * Points gets resetted when the user presses the spacebar to start over the game
-* On the **server side**, the total number of points the user earned througout the game (for every number of games played) in order to calculate the **average points** the user achieves per game
+* On the **server side**, the total number of points the user earned througout the game (for every number of games played) is updayed in order to calculate the **average points** the user achieves per game
 
 ## **3) Number of Games Played**
 * The number of games played increases by one each time the player starts/restarts the game
-* On the **server side**, this number gets updated in the database in order to calculate the **average points** the user acheives per game
+* On the **server side**, this number gets updated in the database in order to calculate the **average points** the user achieves per game
 
 ## **4) Average Points**
-* The average points is calculated on the **server** by dividing the **total points** earned by the user by the **number of games he/she played so far**
+* The average points is calculated on the **server** by dividing the **total points** earned by the **number of games he/she played so far**
 * Average points is calculated to 5 decimal points
 * This information is automatically retrieved everytime the user logins to the game, or when the game end
 
