@@ -20,9 +20,6 @@ It's important to note that this game is **not a 2-player game**, and that **the
 The two characters cannot jump simultaneously. 
 
 When the two characters collide into each other, the game ends and updates user highscore. To play again, simply press the **"spacebar"**  
-
-### A Short Demonstration of the Game:
-![](crash_demonstration.gif)
   
 ## **Tips**
 This game was designed so that you place your **right hand**'s fingers on the following positions:
@@ -32,6 +29,8 @@ This game was designed so that you place your **right hand**'s fingers on the fo
 
 Personally I found this the most comfortable/effective position of your fingers, but it's entirely upto the user on how they prefer to play the game.
 
+### A Short Demonstration of the Game:
+![](crash.gif)
 
 # Instructions on How to Run this Project
 * ssh into the server with the following command:
