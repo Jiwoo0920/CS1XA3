@@ -538,7 +538,7 @@ update msg model = case Debug.log "msg" msg of
                 Ok "UserAlreadyExists" ->
                     ({ model | error = "User Already Exists! Try Again."}, Cmd.none)
                 Ok _ ->
-                    ( {model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, Cmd.none)
+                    ( {model | screen = Game Start, player1_pos = (-30,-10), player2_pos = (30,-10), error = "" }, getLeaderBoard)
                 Err error ->
                     ( handleError model error, Cmd.none )
 
