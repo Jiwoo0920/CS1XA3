@@ -48,8 +48,10 @@ Personally I found this the most comfortable/effective position of your fingers,
     python manage.py runserver localhost:10034
     ```
 * go to **https://mac1xa3.ca/u/leej229/project3.html** to see the project
-
-If you are running this on your local machine by cloning the repo, install the required python packages in **requirements.txt** located in **~/CS1XA3/Project03** by typing the following command:  
+  
+  
+**Note:** 
+* If you are running this on your local machine by cloning the repo, install the required python packages in **requirements.txt** located in **~/CS1XA3/Project03** by typing the following command:  
     ```
     pip install -r requirements.txt
     ```
