@@ -496,7 +496,7 @@ update msg model = case Debug.log "msg" msg of
         PostUserInfo result ->
             case result of 
                 Ok "UpdatedUserInfo" ->
-                    ( model, Cmd.none) --why am i doing a get here???????? NOTE COME BACK LATER FIX
+                    ( model, Cmd.none) 
                 Ok "UserIsNotLoggedIn" ->
                     ( {model | error = "User Is Not Logged In"}, Cmd.none)
                 Ok _ -> 
