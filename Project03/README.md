@@ -37,12 +37,12 @@ Personally I found this the most comfortable/effective position of your fingers,
     ```
     ssh leej229@mac1xa3.ca
     ```
-* cd into **~/CS1XA3**, and install the python virtual environment by typing the following command:
+* cd into **~/CS1XA3**, and activate the python virtual environment by typing the following command:
     ```
     source python_env/bin/activate
     ```
 * cd into **~/CS1XA3/Project03**
-* install the required python packages in **requirements.txt** located in ~/CS1XA3/Project03 by typing the colling command:
+* install the required python packages in **requirements.txt** located in ~/CS1XA3/Project03 by typing the folling command:
     ```
     pip install -r requirements.txt
     ```
