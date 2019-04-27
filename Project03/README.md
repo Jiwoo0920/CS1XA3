@@ -73,6 +73,11 @@ Personally I found this the most comfortable/effective position of your fingers,
 
 When the user successfully login or sign up and is redirected to the game screen, a short instruction of the game is given on the screen and the user is to press on the **spacebar** to start the game.
 
+### **3) Logout**
+* Users can log out of the game by clicking on the **"logout"** button located on the bottom-right side of the game device
+* When logout is requested, the **server** correctly ends the user's session and logs out the user
+* Once the user is logged out, he/she is brought back to the login screen
+
 ## **2) Points**
 * A **Points** text is shown on the upper-centre of the game screen (underneath the **Crash!** title) to record/show the number of points the user earned in a game
 * User earns a point each time he/she successfully jumps the big character over the small character and the characters reach the end of the screen (takes approximately 2 seconds to do so)
@@ -112,11 +117,6 @@ When the user successfully login or sign up and is redirected to the game screen
 * There also are 5 device themes to choose from 
 * Users can navigate through and choose their favourite device theme by clicking on the **up or down** buttons located on the bottom-right side of the game device
 * This information gets posted and saved on the **server** so that the users can retrieve their player theme settings when they login again at later times 
-
-## **8) Logout**
-* Users can log out of the game by clicking on the **"logout"** button located on the bottom-right side of the game device
-* When logout is requested, the **server** correctly ends the user's session and logs out the user
-* Once the user is logged out, he/she is brought back to the login screen
 
 
 
