@@ -53,7 +53,7 @@ Personally I found this the most comfortable/effective position of your fingers,
 * goto **https://mac1xa3.ca/u/leej229/project3.html** to see the project
 
 ### A Short Demonstration of the Game:
-![](crash.gif)
+![](crash_demonstration.gif)
 
 # Features
 ## **1) User Authentication:**
