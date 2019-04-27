@@ -73,7 +73,7 @@ Personally I found this the most comfortable/effective position of your fingers,
 
 When the user successfully login or sign up and is redirected to the game screen, a short instruction of the game is given on the screen and the user is to press on the **spacebar** to start the game.
 
-### **3) Logout**
+### **3) Logout:**
 * Users can log out of the game by clicking on the **"logout"** button located on the bottom-right side of the game device
 * When logout is requested, the **server** correctly ends the user's session and logs out the user
 * Once the user is logged out, he/she is brought back to the login screen
